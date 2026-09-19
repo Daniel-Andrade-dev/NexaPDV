@@ -100,5 +100,42 @@ def finalizar_venda(venda_id: int):
         
 
 
-# Em análise
-# @venda_bp.route("/null_pdv/finalizar_venda/qrcode/<int:venda_id>", methods=["POST"])
+@venda_bp.route("/finalizar_venda/pix/<int:venda_id>", methods=["POST"])
+def finalizar_venda_pix(venda_id: int):
+    try:
+        payload = request.get_json()
+
+        if not payload:
+            return jsonify({"erro": "Corpo da requisição inválida"}), 400
+
+        busca_venda = venda_service.buscar_venda_iniciada(venda_id)
+
+        if busca_venda is None:
+            return jsonify({"erro": "Venda não encontrada"}), 404
+        
+        venda_finalizada = VendaFinalizada(
+            id_venda=None,
+            forma_pagamento=payload['forma_pagamento'],
+            valor_total=busca_venda['valor_total'],
+            valor_pago=busca_venda['valor_total'],
+            status=StatusVenda.CONCLUIDA
+        )
+
+        venda_iniciada = VendaInicializada(
+            venda_id=busca_venda['venda_id'],
+            venda_quantidade=busca_venda['venda_quantidade'],
+            horario_inicializada=busca_venda['horario_inicializada'],
+            data_inicializada=busca_venda['data_inicializada'],
+            status=busca_venda['status']
+        )
+
+        resultado_service = venda_service.finalizar_venda_pix(venda_finalizada, venda_iniciada)
+
+        if "erro" in resultado_service:
+            return jsonify(resultado_service), 400
+        return jsonify(resultado_service), 201
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500   
