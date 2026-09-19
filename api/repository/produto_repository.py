@@ -233,3 +233,29 @@ class ProdutoRepository:
                 "dados": None,
                 "erro": f"Ocorreu um erro ao atualizar o produto: {str(e)}"
             }
+
+    def total_estoque(self):
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        SUM(preco_unitario * estoque) AS valor_total_estoque
+                    FROM
+                        produtos
+                """
+
+                cur = conn.execute(query)
+                valor_total = cur.fetchone()
+
+                if valor_total != 0.0:
+                    return {
+                        "valor_total": round(valor_total['valor_total_estoque'], 2)
+                    }
+                else:
+                    return 0.0
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Ocorreu um erro ao atualizar o produto: {str(e)}"
+            } 
