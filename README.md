@@ -17,7 +17,9 @@ A ideia principal é simular desde o **cadastro dos produtos** até a **finaliza
 * Baixa automática do estoque;
 * Finalização da venda;
 * Registro da forma de pagamento;
-* Cálculo de troco para pagamentos em dinheiro.
+* Cálculo de troco para pagamentos em dinheiro;
+* Pagamento via PIX;
+* Geração de relatórios relacionados aos produtos e estoque.
 
 > **Importante:** o Null PDV é um projeto desenvolvido para fins de estudo e aprendizado, tendo como foco a compreensão da lógica e do fluxo de funcionamento de um sistema de PDV.
 
@@ -70,21 +72,29 @@ Atualmente, o sistema possui as seguintes funcionalidades:
 * Calcular o troco em pagamentos em dinheiro;
 * Listar vendas finalizadas.
 
+### 💳 Pagamentos
+
+* Pagamento em dinheiro;
+* Pagamento via PIX;
+* Geração de QR Code para o fluxo de pagamento via PIX;
+* Retorno do QR Code em formato Base64.
+
+### 📊 Relatórios
+
+* Relatórios relacionados aos produtos e estoque;
+* Consulta do valor total do estoque.
+
 ---
 
 # 🚧 Funcionalidades em desenvolvimento
 
 Algumas funcionalidades do projeto ainda estão em desenvolvimento:
 
-### PIX
-
-O pagamento via **PIX** ainda está em desenvolvimento e será implementado posteriormente.
-
 ### Itens da venda
 
-O gerenciamento dos **itens individuais de uma venda** também está em desenvolvimento.
+O gerenciamento dos **itens individuais de uma venda** ainda está em desenvolvimento.
 
-> **OBS:** As funcionalidades acima podem sofrer alterações conforme o desenvolvimento e evolução do projeto.
+> **OBS:** As funcionalidades podem sofrer alterações conforme o desenvolvimento e evolução do projeto.
 
 ---
 
@@ -97,8 +107,6 @@ Para realizar os testes das requisições, você pode utilizar qualquer uma das 
 3. **Insomnia**
 
 Após instalar uma dessas ferramentas, siga os passos abaixo.
-
-
 
 ## 1. Instalar as dependências
 
@@ -284,8 +292,10 @@ Por exemplo:
 
 ```text
 Estoque antes da venda: 999
-Quantidade vendida:       2
-Estoque após a venda:   997
+
+Quantidade vendida: 2
+
+Estoque após a venda: 997
 ```
 
 Dessa forma, o estoque é atualizado de acordo com os produtos adicionados à venda.
@@ -300,10 +310,22 @@ Depois que a venda foi iniciada, ela permanece com o status:
 aberta
 ```
 
-Para finalizar a venda, é necessário informar:
+A finalização da venda possui **rotas específicas de acordo com a forma de pagamento**.
+
+---
+
+## 💵 Pagamento em dinheiro
+
+Para pagamentos em dinheiro, a venda pode ser finalizada pela rota:
+
+```http
+POST /finalizar_venda/<venda_id>
+```
+
+É necessário informar:
 
 * A forma de pagamento;
-* O valor pago, quando a forma de pagamento for dinheiro.
+* O valor pago.
 
 ### Exemplo
 
@@ -316,9 +338,7 @@ Para finalizar a venda, é necessário informar:
 
 A API utiliza o `venda_id` da venda iniciada para identificar qual venda será finalizada.
 
----
-
-## 💵 Pagamento em dinheiro
+### Cálculo do troco
 
 Quando a forma de pagamento for `dinheiro`, a API utiliza o valor informado em `valor_dinheiro` para calcular o troco.
 
@@ -326,29 +346,68 @@ Por exemplo:
 
 ```text
 Total da venda: R$ 117,40
+
 Valor recebido: R$ 150,00
-Troco:          R$ 32,60
+
+Troco: R$ 32,60
 ```
 
 ---
 
-## 💳 Outras formas de pagamento
+## 💳 Pagamento via PIX
 
-Quando a forma de pagamento **não for dinheiro**, o campo:
+O pagamento via **PIX possui uma rota separada** da finalização convencional.
+
+Essa separação foi realizada para evitar que o QR Code seja incluído nas respostas das outras formas de pagamento, mantendo as respostas da API menores e evitando conflitos relacionados ao conteúdo do QR Code.
+
+A rota utilizada é:
+
+```http
+POST /finalizar_venda/pix/<venda_id>
+```
+
+### Exemplo de requisição
 
 ```json
-"valor_dinheiro"
+{
+    "forma_pagamento": "pix"
+}
 ```
 
-será ignorado pela API.
+A rota específica do PIX realiza o fluxo de finalização da venda e retorna o QR Code juntamente com as informações necessárias da operação.
 
-Isso acontece porque o valor recebido em dinheiro só é necessário para calcular o troco quando o pagamento é realizado em espécie.
+### QR Code em Base64
 
-> **OBS:** O pagamento via **PIX ainda está em desenvolvimento** e não está totalmente implementado no sistema.
+O campo `qrcode` retornado pela API contém a imagem do QR Code representada em **Base64**.
+
+Exemplo:
+
+```json
+{
+    "qrcode": "iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2yk...",
+    "status_venda": true,
+    "sucesso": true,
+    "venda": {
+        "finalizada_em": "19/09/2026T18:55",
+        "pagamento": {
+            "forma": "pix",
+            "valor_pago": 117.4
+        },
+        "status": "concluida",
+        "venda_id": 3
+    }
+}
+```
+
+O Base64 permite transportar os dados da imagem diretamente dentro da resposta JSON.
+
+No futuro, o **front-end** poderá utilizar esse conteúdo para converter e exibir o QR Code visualmente para o usuário.
+
+> **OBS:** O QR Code em Base64 é retornado especificamente pelo endpoint de PIX. Dessa forma, as respostas das demais formas de pagamento não precisam carregar esse conteúdo, mantendo o retorno da API mais enxuto.
 
 ---
 
-## 📋 Resposta da finalização
+## 📋 Resposta da finalização em dinheiro
 
 Exemplo de resposta:
 
@@ -390,7 +449,25 @@ A API também registra informações como:
 * Status da venda;
 * Troco, quando aplicável.
 
+---
 
+# 📊 Relatórios
+
+O sistema também possui funcionalidades relacionadas a **relatórios de produtos e estoque**.
+
+Uma das informações disponíveis é o **valor total do estoque**, permitindo visualizar o valor financeiro correspondente aos produtos atualmente armazenados.
+
+Exemplo conceitual:
+
+```text
+Relatório de Estoque
+────────────────────────────
+Valor total do estoque: R$ 12.450,00
+```
+
+Essas informações podem futuramente ser apresentadas de forma visual através do front-end.
+
+---
 
 # 🔄 Fluxo básico do sistema
 
@@ -406,29 +483,57 @@ De forma simplificada, o funcionamento do **Null PDV** pode ser representado da 
           DEFINIR ESTOQUE
                 │
                 ▼
-          INICIAR VENDA
+           INICIAR VENDA
                 │
                 ▼
-       ADICIONAR PRODUTOS
+        ADICIONAR PRODUTOS
                 │
                 ▼
-       BAIXAR DO ESTOQUE
+        BAIXAR DO ESTOQUE
                 │
                 ▼
-        CALCULAR TOTAL
+         CALCULAR TOTAL
                 │
                 ▼
-       ESCOLHER PAGAMENTO
+        ESCOLHER PAGAMENTO
                 │
+        ┌───────┴────────┐
+        ▼                ▼
+     DINHEIRO           PIX
+        │                │
+        ▼                ▼
+     TROCO          GERAR QR CODE
+        │                │
+        └───────┬────────┘
                 ▼
-        FINALIZAR VENDA
+         FINALIZAR VENDA
                 │
                 ▼
        REGISTRAR PAGAMENTO
                 │
                 ▼
-        VENDA CONCLUÍDA
+         VENDA CONCLUÍDA
 ```
+
+---
+
+# 🖥️ Futuro Front-end
+
+Como próxima etapa do projeto, será desenvolvido um **front-end integrado à API**.
+
+A interface deverá permitir utilizar visualmente as funcionalidades já disponibilizadas pelo backend, incluindo:
+
+* Cadastro e gerenciamento de produtos;
+* Gerenciamento de categorias;
+* Controle de estoque;
+* Criação e finalização de vendas;
+* Pagamento em dinheiro;
+* Pagamento via PIX;
+* Exibição do QR Code;
+* Consulta de relatórios;
+* Visualização do valor total do estoque.
+
+A ideia é manter o **backend responsável pela lógica e regras do sistema**, enquanto o front-end será responsável pela interação visual com o usuário.
 
 ---
 
@@ -438,10 +543,16 @@ O **Null PDV** busca reproduzir, de forma simplificada, o fluxo básico encontra
 
 O projeto começa pelo **cadastro e organização dos produtos**, passa pelo **controle de estoque**, permite **iniciar uma venda** e termina com o **processamento do pagamento e conclusão da venda**.
 
+Atualmente, o sistema também possui suporte ao **pagamento via PIX através de uma rota específica**, com retorno do QR Code em **Base64**, além de funcionalidades de **relatórios de produtos e estoque**.
+
 O principal objetivo não é apenas criar um CRUD, mas compreender como diferentes partes de um sistema de PDV se relacionam durante uma operação de venda.
 
 ```text
 Produto → Estoque → Venda → Pagamento → Venda concluída
+                         │
+                         ├── Dinheiro → Troco
+                         │
+                         └── PIX → QR Code (Base64)
 ```
 
-O projeto continuará sendo evoluído com a implementação de novas funcionalidades, incluindo o **pagamento via PIX** e o gerenciamento completo dos **itens das vendas**.
+O projeto continuará sendo evoluído, tendo como uma das próximas etapas a implementação de um **front-end integrado à API**.
