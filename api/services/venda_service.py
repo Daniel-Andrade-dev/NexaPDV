@@ -7,8 +7,9 @@ from api.repository.venda_repository import VendaRepository
 from api.services.produto_service import ProdutoService
 from api.validator.validator import Validator
 from datetime import datetime
-# import qrcode
-# from PIL import Image
+import qrcode
+import base64
+import io
 
 class VendaService:
     
@@ -122,6 +123,9 @@ class VendaService:
 
         troco = 0.0
         if venda_finalizada.forma_pagamento == FormaPagamentos.DINHEIRO:
+            if not Validator.validar_negativos([valor_dinheiro]):
+                return {"erro": "Informe valores acima de 0 para finalizar"}
+            
             troco = self.calcular_troco_e_verificar(buscar_venda['valor_total'], valor_dinheiro)
 
             if isinstance(troco, dict) and "erro" in troco:
@@ -146,7 +150,45 @@ class VendaService:
             "status_venda": atualizar_status
         }
 
-    # Em desenvolvimento
-    def finalizar_venda_pix(self):
-        pass
+
+    def ler_imagem(self, path='qrcode.png'):
+        with open(path, 'rb') as arq:
+            img = arq.read()
+        return img 
+
+    def gerar_qrcode(self):
+        img = qrcode.make("Pagamento feito com sucesso")
+
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        
+        img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        
+        return img_base64
+
+    def finalizar_venda_pix(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada):
+
+        buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
+
+        if buscar_venda['status'] == StatusVenda.CONCLUIDA:
+            return {"erro": "Venda já está concluída. Tente novamente"}
+
+        resultado_repository = self.venda_repository.finalizar_venda(
+            venda_finalizada,
+            buscar_venda['valor_total'],
+            horario_mock=datetime.now().strftime("%H:%M"),
+            data_mock=datetime.now().strftime("%d/%m/%Y")
+        )
+
+        atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
+
+        if isinstance(atualizar_status, dict) and "erro" in atualizar_status:
+            return atualizar_status
+
+        return {
+            "sucesso": True,
+            "venda": resultado_repository,
+            "qrcode": self.gerar_qrcode(),
+            "status_venda": atualizar_status
+        }
     
