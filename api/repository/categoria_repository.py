@@ -51,11 +51,11 @@ class CategoriaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
-
-    def buscar_categoria(self, nome_categoria=None, categoria_id=None) -> dict:
+    # Essa função será apenas utilizada para vincular a um produto
+    def buscar_categoria_nome(self, nome: str) -> dict | None:
         try:
             with self.connect_database() as conn:
-                query_buscar = """
+                query = """
                     SELECT
                         categoria_id,
                         nome_categoria,
@@ -63,10 +63,10 @@ class CategoriaRepository:
                     FROM
                         categorias
                     WHERE
-                        nome_categoria = ? OR categoria_id = ?
+                        nome_categoria = ?
                 """
 
-                if nome_categoria == "":
+                if nome == "" or not nome:
                     query = """
                         INSERT INTO categorias (
                             nome_categoria,
@@ -78,9 +78,31 @@ class CategoriaRepository:
                         "categoria": CategoriaDefault.DIVERSOS
                     }
                 else:
-                    cur = conn.execute(query_buscar,(nome_categoria, categoria_id,))
+                    cur = conn.execute(query,(nome,))
                     categoria = cur.fetchone()
-                    return dict(categoria) if categoria is not None else {"erro": "Categoria não encontrada"}
+                    return dict(categoria) if categoria is not None else None
+        except sql.Error as e:
+            return {
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+        
+    def buscar_categoria_id(self, categoria_id: int) -> dict | None:
+        try:
+            with self.connect_database() as conn:
+                query_buscar = """
+                    SELECT
+                        categoria_id,
+                        nome_categoria,
+                        status
+                    FROM
+                        categorias
+                    WHERE
+                        categoria_id = ?
+                """
+
+                cur = conn.execute(query_buscar,(categoria_id,))
+                categoria = cur.fetchone()
+                return dict(categoria) if categoria else None
         except sql.Error as e:
             return {
                 "erro": f"Erro de banco de dados: {str(e)}"
@@ -116,8 +138,41 @@ class CategoriaRepository:
    
 
     def atualizar_categoria(self, categoria: Categoria):
-        pass 
 
+        if not isinstance(categoria, Categoria):
+            return {"erro": "Objeto inválido. Esperado tipo categoria"}
+        
+        try:
+            resultado_busca = self.buscar_categoria(categoria.categoria_id)
+
+            if resultado_busca is None:
+                return {"erro": "Categoria não encontrada"}
+
+            with self.connect_database() as conn:
+                query = """
+                    UPDATE
+                        categorias
+                    SET
+                        nome_categoria = ?,
+                        status = ?
+                    WHERE
+                        categoria_id = ?
+                """
+
+                conn.execute(query, (
+                    categoria.nome,
+                    categoria.status,
+                    categoria.categoria_id
+                ))
+
+                return {
+                    "nome_categoria": categoria.nome,
+                    "status": categoria.status
+                }
+        except sql.Error as e:
+            return {
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
 
     def listar_categorias(self):
         try:
