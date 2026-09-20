@@ -1,10 +1,10 @@
-# Null PDV
+# NexaPDV
 
 API de um sistema de **Ponto de Venda (PDV)** desenvolvido com o objetivo de estudar e simular o funcionamento básico de um sistema de supermercado.
 
 ## 🎯 Objetivo do projeto
 
-O **Null PDV** foi desenvolvido como um projeto de estudo para compreender, na prática, como funciona o fluxo de uma venda em um sistema de supermercado.
+O **NexaPDV** foi desenvolvido como um projeto de estudo para compreender, na prática, como funciona o fluxo de uma venda em um sistema de supermercado.
 
 A ideia principal é simular desde o **cadastro dos produtos** até a **finalização e pagamento de uma venda**, permitindo estudar conceitos como:
 
@@ -21,7 +21,7 @@ A ideia principal é simular desde o **cadastro dos produtos** até a **finaliza
 * Pagamento via PIX;
 * Geração de relatórios relacionados aos produtos e estoque.
 
-> **Importante:** o Null PDV é um projeto desenvolvido para fins de estudo e aprendizado, tendo como foco a compreensão da lógica e do fluxo de funcionamento de um sistema de PDV.
+> **Importante:** o NexaPDV é um projeto desenvolvido para fins de estudo e aprendizado, tendo como foco a compreensão da lógica e do fluxo de funcionamento de um sistema de PDV.
 
 ---
 
@@ -74,10 +74,12 @@ Atualmente, o sistema possui as seguintes funcionalidades:
 
 ### 💳 Pagamentos
 
-* Pagamento em dinheiro;
-* Pagamento via PIX;
-* Geração de QR Code para o fluxo de pagamento via PIX;
+* Simulação de pagamento em dinheiro;
+* Simulação de pagamento via PIX;
+* Geração de QR Code para o fluxo simulado de pagamento via PIX;
 * Retorno do QR Code em formato Base64.
+
+> **Observação:** a parte de pagamentos do NexaPDV é **apenas uma simulação**. O projeto não utiliza APIs ou gateways de pagamento prontos, como Mercado Pago, Stripe ou outros serviços externos. A lógica de pagamento é implementada diretamente na aplicação com fins de estudo.
 
 ### 📊 Relatórios
 
@@ -95,6 +97,20 @@ Algumas funcionalidades do projeto ainda estão em desenvolvimento:
 O gerenciamento dos **itens individuais de uma venda** ainda está em desenvolvimento.
 
 > **OBS:** As funcionalidades podem sofrer alterações conforme o desenvolvimento e evolução do projeto.
+
+
+
+# 🗄️ Inicialização do banco de dados
+
+O NexaPDV utiliza **SQLite3** para armazenamento dos dados.
+
+Para iniciar o banco de dados, execute o seguinte comando na raiz do projeto:
+
+```bash
+python api/database/connections.py
+```
+
+> **OBS:** Ao executar o arquivo de inicialização do banco de dados, serão implementados automaticamente **50 produtos e 9 categorias** para fins de testes e demonstração do sistema.
 
 ---
 
@@ -117,8 +133,6 @@ pip install -r requirements.txt
 ```
 
 Esse comando instala todas as bibliotecas necessárias para executar a API.
-
----
 
 ## 2. Executar a API
 
@@ -352,62 +366,7 @@ Valor recebido: R$ 150,00
 Troco: R$ 32,60
 ```
 
----
-
-## 💳 Pagamento via PIX
-
-O pagamento via **PIX possui uma rota separada** da finalização convencional.
-
-Essa separação foi realizada para evitar que o QR Code seja incluído nas respostas das outras formas de pagamento, mantendo as respostas da API menores e evitando conflitos relacionados ao conteúdo do QR Code.
-
-A rota utilizada é:
-
-```http
-POST /finalizar_venda/pix/<venda_id>
-```
-
-### Exemplo de requisição
-
-```json
-{
-    "forma_pagamento": "pix"
-}
-```
-
-A rota específica do PIX realiza o fluxo de finalização da venda e retorna o QR Code juntamente com as informações necessárias da operação.
-
-### QR Code em Base64
-
-O campo `qrcode` retornado pela API contém a imagem do QR Code representada em **Base64**.
-
-Exemplo:
-
-```json
-{
-    "qrcode": "iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2yk...",
-    "status_venda": true,
-    "sucesso": true,
-    "venda": {
-        "finalizada_em": "19/09/2026T18:55",
-        "pagamento": {
-            "forma": "pix",
-            "valor_pago": 117.4
-        },
-        "status": "concluida",
-        "venda_id": 3
-    }
-}
-```
-
-O Base64 permite transportar os dados da imagem diretamente dentro da resposta JSON.
-
-No futuro, o **front-end** poderá utilizar esse conteúdo para converter e exibir o QR Code visualmente para o usuário.
-
-> **OBS:** O QR Code em Base64 é retornado especificamente pelo endpoint de PIX. Dessa forma, as respostas das demais formas de pagamento não precisam carregar esse conteúdo, mantendo o retorno da API mais enxuto.
-
----
-
-## 📋 Resposta da finalização em dinheiro
+### 📋 Resposta da finalização em dinheiro
 
 Exemplo de resposta:
 
@@ -451,6 +410,61 @@ A API também registra informações como:
 
 ---
 
+## 💳 Pagamento via PIX
+
+O pagamento via **PIX possui uma rota separada** da finalização convencional.
+
+Essa separação foi realizada para evitar que o QR Code seja incluído nas respostas das outras formas de pagamento, mantendo as respostas da API menores e evitando conflitos relacionados ao conteúdo do QR Code.
+
+A rota utilizada é:
+
+```http
+POST /finalizar_venda/pix/<venda_id>
+```
+
+### Exemplo de requisição
+
+```json
+{
+    "forma_pagamento": "pix"
+}
+```
+
+A rota específica do PIX realiza o fluxo simulado de finalização da venda e retorna o QR Code juntamente com as informações necessárias da operação.
+
+### QR Code em Base64
+
+O campo `qrcode` retornado pela API contém a imagem do QR Code representada em **Base64**.
+
+Exemplo:
+
+```json
+{
+    "qrcode": "iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2yk...",
+    "status_venda": true,
+    "sucesso": true,
+    "venda": {
+        "finalizada_em": "19/09/2026T18:55",
+        "pagamento": {
+            "forma": "pix",
+            "valor_pago": 117.4
+        },
+        "status": "concluida",
+        "venda_id": 3
+    }
+}
+```
+
+O Base64 permite transportar os dados da imagem diretamente dentro da resposta JSON.
+
+No futuro, o **front-end** poderá utilizar esse conteúdo para converter e exibir o QR Code visualmente para o usuário.
+
+> **OBS:** O QR Code em Base64 é retornado especificamente pelo endpoint de PIX. Dessa forma, as respostas das demais formas de pagamento não precisam carregar esse conteúdo, mantendo o retorno da API mais enxuto.
+
+> **Importante:** o PIX implementado no NexaPDV também é **simulado**. O projeto não realiza uma transação PIX real e não possui integração com gateways ou APIs de pagamento externas.
+
+---
+
 # 📊 Relatórios
 
 O sistema também possui funcionalidades relacionadas a **relatórios de produtos e estoque**.
@@ -471,7 +485,7 @@ Essas informações podem futuramente ser apresentadas de forma visual através 
 
 # 🔄 Fluxo básico do sistema
 
-De forma simplificada, o funcionamento do **Null PDV** pode ser representado da seguinte maneira:
+De forma simplificada, o funcionamento do **NexaPDV** pode ser representado da seguinte maneira:
 
 ```text
         CADASTRAR CATEGORIA
@@ -503,6 +517,7 @@ De forma simplificada, o funcionamento do **Null PDV** pode ser representado da 
         │                │
         ▼                ▼
      TROCO          GERAR QR CODE
+        │             (SIMULADO)
         │                │
         └───────┬────────┘
                 ▼
@@ -527,8 +542,8 @@ A interface deverá permitir utilizar visualmente as funcionalidades já disponi
 * Gerenciamento de categorias;
 * Controle de estoque;
 * Criação e finalização de vendas;
-* Pagamento em dinheiro;
-* Pagamento via PIX;
+* Simulação de pagamento em dinheiro;
+* Simulação de pagamento via PIX;
 * Exibição do QR Code;
 * Consulta de relatórios;
 * Visualização do valor total do estoque.
@@ -539,11 +554,15 @@ A ideia é manter o **backend responsável pela lógica e regras do sistema**, e
 
 # 📌 Resumo
 
-O **Null PDV** busca reproduzir, de forma simplificada, o fluxo básico encontrado em um sistema de supermercado.
+O **NexaPDV** busca reproduzir, de forma simplificada, o fluxo básico encontrado em um sistema de supermercado.
 
-O projeto começa pelo **cadastro e organização dos produtos**, passa pelo **controle de estoque**, permite **iniciar uma venda** e termina com o **processamento do pagamento e conclusão da venda**.
+O projeto começa pelo **cadastro e organização dos produtos**, passa pelo **controle de estoque**, permite **iniciar uma venda** e termina com o **processamento simulado do pagamento e conclusão da venda**.
 
 Atualmente, o sistema também possui suporte ao **pagamento via PIX através de uma rota específica**, com retorno do QR Code em **Base64**, além de funcionalidades de **relatórios de produtos e estoque**.
+
+A implementação de pagamentos tem **finalidade exclusivamente educacional**. O NexaPDV não utiliza gateways ou APIs externas de pagamento, como Mercado Pago, Stripe ou outros serviços semelhantes. Toda a lógica de pagamento foi desenvolvida dentro da própria aplicação para simular o comportamento de um sistema de PDV.
+
+O banco de dados também possui uma carga inicial de dados para facilitar os testes, com **50 produtos e 9 categorias**.
 
 O principal objetivo não é apenas criar um CRUD, mas compreender como diferentes partes de um sistema de PDV se relacionam durante uma operação de venda.
 
