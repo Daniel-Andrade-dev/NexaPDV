@@ -34,13 +34,8 @@ def adicionar_categoria():
 @categoria_bp.route("/categorias/<int:categoria_id>", methods=["GET"])
 def buscar_categoria(categoria_id):
     try:
-        payload = request.get_json()
 
-        if not payload:
-            return jsonify({"erro": "Corpo da requisição inválido"}), 400
-
-        resultado_service = categoria_service.buscar_categoria(
-            payload['categoria'],
+        resultado_service = categoria_service.buscar_categoria_id(
             categoria_id
         )
 
@@ -68,7 +63,10 @@ def listar_categorias():
 @categoria_bp.route("/categorias/<int:categoria_id>", methods=["DELETE"])
 def deletar_categoria(categoria_id: int):
     try:
-        categoria_buscada = categoria_service.buscar_categoria(categoria_id=categoria_id)
+        categoria_buscada = categoria_service.buscar_categoria_id(categoria_id)
+
+        if categoria_buscada is None:
+            return jsonify({"erro": "Categoria não encontrada"}), 404
 
         categoria = Categoria(
             categoria_id=categoria_id,
@@ -88,3 +86,29 @@ def deletar_categoria(categoria_id: int):
             "erro": str(e)
         }), 500
 
+@categoria_bp.route("/categorias/<int:categoria_id>", methods=["PUT"])
+def atualizar_categoria(categoria_id: int):
+    try:
+        payload = request.get_json()
+
+        categoria_buscada = categoria_service.buscar_categoria_id(categoria_id)
+
+        if categoria_buscada is None:
+            return jsonify({"erro": "Categoria não encontrada"}), 404
+        
+        categoria = Categoria(
+            categoria_id=categoria_id,
+            nome=payload['nome'],
+            status=payload['status']
+        )
+
+        resultado_service = categoria_service.atualizar_categoria(categoria)
+
+        if "erro" in resultado_service:
+            return jsonify(resultado_service), 400
+        return jsonify(resultado_service), 200
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500
