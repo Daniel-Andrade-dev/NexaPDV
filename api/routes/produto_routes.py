@@ -1,7 +1,6 @@
 from flask import jsonify, request, Blueprint
 from api.services.produto_service import ProdutoService
 from api.models.produto.produto import Produto
-from api.enums.status_categoria import CategoriaDefault
 from api.services.categoria_service import CategoriaService
 
 produto_bp = Blueprint("produto", __name__)
@@ -16,17 +15,17 @@ def cadastrar_produto():
         if not payload:
             return jsonify({"erro": "Corpo da requisição inválido"}), 400
 
-        categoria_buscada = categoria_service.buscar_categoria(payload['categoria'])
+        categoria_buscada = categoria_service.buscar_categoria_nome(payload['categoria'])
 
-        if categoria_buscada is None or "erro" in categoria_buscada:
-            return jsonify(categoria_buscada), 404
+        if categoria_buscada is None:
+            return jsonify({"erro": "Categoria não encontrada"}), 404
 
         produto = Produto(
             codigo=None,
             nome_produto=payload['nome_produto'],
             preco_unitario=payload['preco_unitario'],
             estoque=payload['estoque'],
-            categoria=payload['categoria'],
+            categoria=categoria_buscada['categoria'] if payload['categoria'] == "" else payload['categoria'],
             status=payload['status'] 
         )
 
