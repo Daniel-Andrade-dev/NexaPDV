@@ -26,3 +26,13 @@ def logs_vendas_finalizadas():
             "msg": "Ocorreu um erro no servidor",
             "erro": str(e)
         }), 500
+
+@relatorio_bp.route("/vendas_canceladas", methods=['GET'])
+def logs_vendas_canceladas():
+    try:
+        return jsonify(vendas_relatorios.vendas_canceladas())
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500

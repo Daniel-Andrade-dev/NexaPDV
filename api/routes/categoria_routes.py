@@ -1,10 +1,12 @@
 from flask import jsonify, request, Blueprint
 from api.services.categoria_service import CategoriaService
+from api.services.produto_service import ProdutoService
 from api.models.categoria.categoria import Categoria
-from api.enums.status_categoria import CategoriaDefault
+from api.enums.status_categoria import CategoriaDefault, StatusCategoria
 
 categoria_bp = Blueprint("categoria", __name__)
 categoria_service = CategoriaService()
+produto_service = ProdutoService()
 
 @categoria_bp.route("/categorias", methods=["POST"])
 def adicionar_categoria():
@@ -13,14 +15,14 @@ def adicionar_categoria():
 
         if not payload:
             return jsonify({"erro": "Corpo da requisição inválido"}), 400
-        
+
         categoria = Categoria(
             categoria_id=None,
-            nome=CategoriaDefault.DIVERSOS if payload['categoria'] == "" else payload['categoria'],
-            status=payload['status']
+            nome=payload['categoria'],
+            status=payload['status'],
         )
 
-        resultado_service = categoria_service.adicionar_categoria(categoria=categoria)
+        resultado_service = categoria_service.adicionar_categoria(categoria)
 
         if "erro" not in resultado_service:
             return jsonify(resultado_service), 201

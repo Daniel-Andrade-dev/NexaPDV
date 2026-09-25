@@ -107,6 +107,16 @@ class VendaService:
             "estoque": baixa_estoque
         }
             
+    def cancelar_venda(self, venda_iniciada: VendaInicializada):
+        if not isinstance(venda_iniciada, VendaInicializada):
+            return {"erro": "Objeto inválido"}
+
+        if venda_iniciada == StatusVenda.CONCLUIDA:
+            return {"erro": "Não e possível cancelar vendas concluídas"}
+
+        resultado_repository = self.venda_repository.cancelar_venda(venda_iniciada)
+
+        return resultado_repository
 
     def finalizar_venda(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada, valor_dinheiro=None):
 
@@ -120,6 +130,9 @@ class VendaService:
 
         if buscar_venda['status'] == StatusVenda.CONCLUIDA:
             return {"erro": "Venda já está concluída. Tente novamente"}
+
+        if buscar_venda['status'] == StatusVenda.CANCELADA:
+            return {"erro": "Não e possível finalizar vendas canceladas"}
 
         troco = 0.0
         if venda_finalizada.forma_pagamento == FormaPagamentos.DINHEIRO:
@@ -172,7 +185,10 @@ class VendaService:
 
         if buscar_venda['status'] == StatusVenda.CONCLUIDA:
             return {"erro": "Venda já está concluída. Tente novamente"}
-
+        
+        if buscar_venda['status'] == StatusVenda.CANCELADA:
+            return {"erro": "Não e possível finalizar vendas canceladas"}
+        
         resultado_repository = self.venda_repository.finalizar_venda(
             venda_finalizada,
             buscar_venda['valor_total'],

@@ -115,7 +115,6 @@ class VendaRepository:
                         status
                     FROM
                         vendas_inicializadas
-                    ORDER BY status = 'concluida'
                 """
                 cur = conn.execute(query)
                 vendas_atuais = cur.fetchall()
@@ -203,6 +202,69 @@ class VendaRepository:
                 ))
 
                 return cur.rowcount > 0 
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+    def cancelar_venda(self, venda_iniciada: VendaInicializada) -> dict:
+        try:
+
+            if not isinstance(venda_iniciada, VendaInicializada):
+                return {"erro": "Objeto inválida"}
+            
+            buscar_venda = self.buscar_venda_inicializada(venda_iniciada.venda_id)
+
+            if buscar_venda is None:
+                return {"erro": "Venda não encontrada"}
+            
+            with self.connect_database() as conn:
+                query = """
+                    UPDATE
+                        vendas_inicializadas
+                    SET
+                        status = ?
+                    WHERE
+                        venda_id = ?
+                """
+
+                cur = conn.execute(query, (
+                    venda_iniciada.status,
+                    buscar_venda['venda_id']
+                ))
+
+                return {
+                    "sucesso": cur.rowcount > 0,
+                    "msg": "Venda cancelada com sucesso"
+                }
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+    def listar_vendas_canceladas(self) -> list[dict]:
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        venda_id,
+                        valor_total,
+                        venda_quantidade,
+                        horario_inicializada AS horario,
+                        data_inicializada AS data,
+                        status
+                    FROM
+                        vendas_inicializadas
+                    WHERE
+                        status = 'cancelada'
+                """
+                cur = conn.execute(query)
+                vendas_canceladas = cur.fetchall()
+                return [dict(venda) for venda in vendas_canceladas]
         except sql.Error as e:
             return {
                 "sucesso": False,

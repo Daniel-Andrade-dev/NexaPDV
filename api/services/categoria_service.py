@@ -15,12 +15,13 @@ class CategoriaService:
 
         if not Validator.validar_campos([categoria.status]):
             return {"erro": "Há campos vazios que precisam ser preenchidos."}
-
+        
         if categoria.status not in [status.value for status in StatusCategoria]:
             return {"erro": "Status inválido. Apenas (ATIVO OU INATIVO)"}
 
-        return self.categoria_repository.adicionar_categoria(categoria=categoria)
+        return self.categoria_repository.adicionar_categoria(categoria)
 
+        
     def atualizar_categoria(self, categoria: Categoria):
         if not isinstance(categoria, Categoria):
             return {"erro": "Objeto inválido"}

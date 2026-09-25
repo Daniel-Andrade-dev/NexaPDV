@@ -55,7 +55,6 @@ class ProdutoService:
             produto.nome_produto,
             produto.preco_unitario,
             produto.estoque,
-            produto.categoria,
             produto.status
         ]):
             return {

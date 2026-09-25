@@ -1,4 +1,5 @@
 from api.models.categoria.categoria import Categoria
+from api.models.produto.produto import Produto
 from api.database.connections import ConnectionDataBase
 from api.enums.status_categoria import CategoriaDefault
 from api.enums.status_categoria import StatusCategoria
@@ -20,14 +21,14 @@ class CategoriaRepository:
             with self.connect_database() as conn:
                 query = """
                     INSERT INTO categorias (
-                        nome_categoria,
+                        nome,
                         status
                     ) VALUES(?,?)
                 """
 
                 cur = conn.execute(query, (
                     categoria.nome,
-                    categoria.status
+                    categoria.status,
                 ))
 
                 categoria_id = cur.lastrowid
@@ -37,8 +38,8 @@ class CategoriaRepository:
                     "dados": {
                         "categoria_id": categoria_id,
                         "categoria": categoria.nome,
-                        "status": categoria.status
-                    },
+                        "status": categoria.status,
+                    }
                 }
         except sql.IntegrityError:
             return {
@@ -75,7 +76,7 @@ class CategoriaRepository:
                     """
                     cur = conn.execute(query, (CategoriaDefault.DIVERSOS, StatusCategoria.ATIVO))
                     return {
-                        "categoria": CategoriaDefault.DIVERSOS
+                        "categoria": CategoriaDefault.DIVERSOS  
                     }
                 else:
                     cur = conn.execute(query,(nome,))
@@ -92,7 +93,7 @@ class CategoriaRepository:
                 query_buscar = """
                     SELECT
                         categoria_id,
-                        nome_categoria,
+                        nome,
                         status
                     FROM
                         categorias
@@ -153,7 +154,7 @@ class CategoriaRepository:
                     UPDATE
                         categorias
                     SET
-                        nome_categoria = ?,
+                        nome = ?,
                         status = ?
                     WHERE
                         categoria_id = ?
@@ -180,7 +181,7 @@ class CategoriaRepository:
                 query = """
                     SELECT
                         categoria_id,
-                        nome_categoria,
+                        nome,
                         status
                     FROM
                         categorias

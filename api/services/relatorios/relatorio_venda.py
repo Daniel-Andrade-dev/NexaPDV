@@ -11,3 +11,5 @@ class RelatorioVendas:
     def listar_vendas_finalizas(self):
         return self.venda_repository.listar_vendas_finalizas()
 
+    def vendas_canceladas(self):
+        return self.venda_repository.listar_vendas_canceladas()

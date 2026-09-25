@@ -139,3 +139,32 @@ def finalizar_venda_pix(venda_id: int):
             "msg": "Ocorreu um erro no servidor",
             "erro": str(e)
         }), 500   
+
+    
+@venda_bp.route("/cancelar_venda/<int:venda_id>", methods=["PUT"])
+def cancelar_venda(venda_id: int):
+    try:
+        resultado_busca = venda_service.buscar_venda_iniciada(venda_id)
+
+        if resultado_busca is None:
+            return {"erro": "Venda não encontrada"}
+
+        venda_iniciada = VendaInicializada(
+            resultado_busca['venda_id'],
+            resultado_busca['venda_quantidade'],
+            resultado_busca['horario_inicializada'],
+            resultado_busca['data_inicializada'],
+            StatusVenda.CANCELADA
+        )
+
+        resultado_service = venda_service.cancelar_venda(venda_iniciada)
+
+        if "erro" in resultado_service:
+            return jsonify(resultado_service), 400
+        return jsonify(resultado_service), 200
+    
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500   

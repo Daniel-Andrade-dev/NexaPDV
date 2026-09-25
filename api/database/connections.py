@@ -1,6 +1,6 @@
 import sqlite3 as sql
 
-DB_NAME = "null_pdv.db"
+DB_NAME = "NexaPDV.db"
 
 
 
@@ -14,7 +14,7 @@ class Tabelas:
                 nome_produto TEXT UNIQUE NOT NULL,
                 preco_unitario NUMERIC(10,2) NOT NULL,
                 estoque INTEGER NOT NULL,
-                categoria TEXT DEFAULT "diversos",
+                categoria TEXT,
                 status TEXT DEFAULT "ativo" NOT NULL,
                 FOREIGN KEY (categoria) REFERENCES categorias(nome_categoria)
             )
@@ -26,7 +26,7 @@ class Tabelas:
         return """
             CREATE TABLE IF NOT EXISTS categorias (
                 categoria_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome_categoria TEXT DEFAULT "diversos" UNIQUE,
+                nome TEXT DEFAULT "diversos" UNIQUE,
                 status TEXT DEFAULT "ativo" NOT NULL
             )
         """
@@ -200,7 +200,7 @@ class ConnectionDataBase:
             with self.connect_sql() as conn:
                 conn.executemany("""
                     INSERT INTO categorias
-                    (nome_categoria, status)
+                    (nome, status)
                     VALUES (?, ?)
                 """, categorias)
 
