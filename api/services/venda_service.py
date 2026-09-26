@@ -18,7 +18,6 @@ class VendaService:
         self.produto_service = ProdutoService()
         self.carrinho = []
 
-    
     def adicionar_ao_carrinho(self, venda: VendaInicializada, produto: Produto) -> list:
         if not Validator.validar_campos([produto.codigo, venda.venda_quantidade]):
             return {"erro": "Preenche os campos para iniciar a VENDA"}
@@ -39,7 +38,20 @@ class VendaService:
             "status": venda.status
         })
         return self.carrinho
-    
+
+    # A função e responsavel por retorna apenas o que precisa do carrinho
+    def carrinho_api(self, carrinho_atual: list[dict]) -> list:
+        response = []
+        for item in carrinho_atual:
+            response.append({
+                "nome_produto": item['nome_produto'],
+                "preco_unitario": item['preco_unitario'],
+                "quantidade_venda": item['quantidade_venda'],
+                "valor_total_produto": item['valor_total_produto']
+            })
+
+        return response
+
     def calcular_valor_total_venda(self) -> float:
         return round(sum(item['preco_unitario'] * item['quantidade_venda'] for item in self.carrinho), 2)
 
@@ -47,8 +59,7 @@ class VendaService:
         if valor_dinheiro < valor_total:
             return {"erro": f"Valor insuficiente. Faltam R${valor_total - valor_dinheiro:.2f}"}
         
-        if valor_dinheiro == valor_total:
-            return 0.0
+        if valor_dinheiro == valor_total: return 0.0
 
         return round(valor_dinheiro - valor_total, 2)
 
@@ -60,8 +71,19 @@ class VendaService:
         carrinho_atual = self.carrinho
         valor_total = 0.0
         baixa_estoque = None
+        response = []
+
 
         for item in itens_vendas:
+
+            baixa_estoque = self.produto_service.baixa_estoque(
+                item['produto_obj'],
+                item['venda_obj']
+            )
+
+            if isinstance(baixa_estoque, dict) and "erro" in baixa_estoque:
+                return baixa_estoque
+
             carrinho_atual = self.adicionar_ao_carrinho(
                 item['venda_obj'],
                 item['produto_obj']
@@ -72,23 +94,8 @@ class VendaService:
 
             valor_total = self.calcular_valor_total_venda()
 
-            baixa_estoque = self.produto_service.baixa_estoque(
-                item['produto_obj'],
-                item['venda_obj']
-            )
 
-            if isinstance(baixa_estoque, dict) and "erro" in baixa_estoque:
-                return baixa_estoque
-
-        carrinho_api = []
-
-        for item in carrinho_atual:
-            carrinho_api.append({
-                "nome_produto": item['nome_produto'],
-                "preco_unitario": item['preco_unitario'],
-                "quantidade_venda": item['quantidade_venda'],
-                "valor_total_produto": item['valor_total_produto']
-            })
+        response_carrinho = self.carrinho_api(carrinho_atual)
 
         resultado_repository = self.venda_repository.inicializar_vendas(
             carrinho_atual.copy(),
@@ -99,19 +106,24 @@ class VendaService:
             return resultado_repository
 
         self.carrinho.clear()
-        return {
-            "success": True,
-            "message": "Venda inicializada com sucesso.",
-            "carrinho_atual": carrinho_api,
-            "data": resultado_repository,
-            "estoque": baixa_estoque
-        }
+
+        response.append({
+            "sucesso": True,
+            "msg": "Venda iniciada com sucesso",
+            "carrinho_atual": response_carrinho,
+            "dados": resultado_repository,
+            "estoque": baixa_estoque['sucesso']
+        })
+
+        return response
             
     def cancelar_venda(self, venda_iniciada: VendaInicializada):
         if not isinstance(venda_iniciada, VendaInicializada):
             return {"erro": "Objeto inválido"}
 
-        if venda_iniciada == StatusVenda.CONCLUIDA:
+        buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
+
+        if buscar_venda['status'] == StatusVenda.CONCLUIDA:
             return {"erro": "Não e possível cancelar vendas concluídas"}
 
         resultado_repository = self.venda_repository.cancelar_venda(venda_iniciada)
