@@ -9,10 +9,7 @@ class VendaRepository:
     def connect_database(self):
         return ConnectionDataBase().connect_sql()
 
-    def inicializar_vendas(self, items: list[dict], valor_total_mock: float) -> dict:
-
-        if not items or len(items) == 0:
-            return {"erro": "O carrinho precisa de um item para inicia a venda"}
+    def inicializar_vendas(self, items: list[dict], valor_total: float) -> dict:
 
         try:
             for item in items:
@@ -28,39 +25,32 @@ class VendaRepository:
                     """
 
                     cur = conn.execute(query, (
-                        valor_total_mock,
+                        valor_total,
                         item['quantidade_venda'],
                         item['horario_inicializada'],
                         item['data_inicializada'],
                         item['status']
                     ))
 
-
                     venda_id = cur.lastrowid
 
-
                 return {
-                    "venda": {
-                        "venda_id": venda_id,
-                        "iniciada_em": f"{item['data_inicializada']}T{item['horario_inicializada']}",
-                        "status": item['status'],
-                        "valor_total_venda": valor_total_mock
-                    }
+                    "venda_id": venda_id,
+                    "iniciada_em": f"{item['data_inicializada']}T{item['horario_inicializada']}",
+                    "status": item['status'],
+                    "valor_total_venda": valor_total
                 }
         except sql.Error as e:
             return {
-                "sucesso": False,
-                "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
 
         
-    def finalizar_venda(self, venda: VendaFinalizada, valor_total, horario_mock, data_mock):
+    def finalizar_venda(self, venda: VendaFinalizada, valor_total, troco, horario_mock, data_mock):
         try:
             if not isinstance(venda, VendaFinalizada):
                 return {'erro': 'Objeto inválido'}
-
 
             with self.connect_database() as conn:
                 query = """
@@ -83,17 +73,17 @@ class VendaRepository:
                     data_mock
                 ))
 
-
                 venda_id = cur.lastrowid
 
             return {
                 "venda_id": venda_id,
+                "finalizada_em": f"{data_mock}T{horario_mock}",
                 "pagamento": {
                     "forma": venda.forma_pagamento,
-                    "valor_pago": venda.valor_pago
+                    "valor_pago": venda.valor_pago,
+                    "troco": troco
                 },
-                "status": venda.status,
-                "finalizada_em": f"{data_mock}T{horario_mock}"
+                "status_venda_finalizada": venda.status,
             }
         except sql.Error as e:
             return {
@@ -201,7 +191,10 @@ class VendaRepository:
                     buscar_venda["venda_id"]
                 ))
 
-                return cur.rowcount > 0 
+                return {
+                    "sucesso": cur.rowcount > 0,
+                    "msg": "Status atualizado"
+                }
         except sql.Error as e:
             return {
                 "sucesso": False,
@@ -213,7 +206,7 @@ class VendaRepository:
         try:
 
             if not isinstance(venda_iniciada, VendaInicializada):
-                return {"erro": "Objeto inválida"}
+                return {"erro": "Objeto inválido"}
             
             buscar_venda = self.buscar_venda_inicializada(venda_iniciada.venda_id)
 
