@@ -87,7 +87,6 @@ def deletar_produto(codigo: int):
         )
 
         return jsonify({
-            "sucesso": True,
             "deletado": produto_service.deletar_produto(produto)
         }), 200
     except Exception as e:
@@ -104,7 +103,7 @@ def atualizar_produto(codigo: int):
         produto_buscado = produto_service.buscar_produto(codigo)
 
         if produto_buscado is None:
-            return jsonify({"erro": "Produto não encontrado para exclusão."}), 404
+            return jsonify({"erro": "Produto não encontrado para atualização."}), 404
 
         produto = Produto(
             produto_buscado['codigo'],
