@@ -1,4 +1,4 @@
-from flask import jsonify, request, Blueprint
+from flask import jsonify, Blueprint
 from api.services.relatorios.relatorio_venda import RelatorioVendas
 
 
@@ -20,7 +20,7 @@ def logs_vendas_iniciadas():
 @relatorio_bp.route("/vendas_finalizadas", methods=['GET'])
 def logs_vendas_finalizadas():
     try:
-        return jsonify(vendas_relatorios.listar_vendas_finalizas()), 200
+        return jsonify(vendas_relatorios.listar_vendas_finalizadas()), 200
     except Exception as e:
         return jsonify({
             "msg": "Ocorreu um erro no servidor",
@@ -30,7 +30,47 @@ def logs_vendas_finalizadas():
 @relatorio_bp.route("/vendas_canceladas", methods=['GET'])
 def logs_vendas_canceladas():
     try:
-        return jsonify(vendas_relatorios.vendas_canceladas())
+        return jsonify(vendas_relatorios.vendas_canceladas()), 200
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500
+
+@relatorio_bp.route("/ticket_medio", methods=['GET'])
+def log_ticket_medio_vendas_finalizadas():
+    try:
+        return jsonify(vendas_relatorios.ticket_medio_vendas()), 200
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500
+
+@relatorio_bp.route("/total_vendas_canceladas", methods=['GET'])
+def log_total_vendas_canceladas():
+    try:
+        return jsonify(vendas_relatorios.total_vendas_canceladas())
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500
+
+@relatorio_bp.route("/total_vendas_iniciadas", methods=['GET'])
+def log_total_vendas_iniciadas():
+    try:
+        return jsonify(vendas_relatorios.total_vendas_iniciadas())
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500
+
+@relatorio_bp.route("/total_vendas_finalizadas", methods=['GET'])
+def log_total_vendas_finalizadas():
+    try:
+        return jsonify(vendas_relatorios.total_vendas_finalizadas())
     except Exception as e:
         return jsonify({
             "msg": "Ocorreu um erro no servidor",
