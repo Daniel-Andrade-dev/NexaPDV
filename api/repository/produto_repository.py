@@ -85,7 +85,8 @@ class ProdutoRepository:
                         "categoria": produto["categoria"],
                         "status": produto["status"]
                     }
-                return {"erro": "Produto não encontrado"}
+                else:
+                    return None
         except sql.Error as e:
             return {
                 "erro": f"Erro de banco de dados: {str(e)}"
@@ -103,7 +104,7 @@ class ProdutoRepository:
             
             novo_estoque = int(busca_produto['estoque']) - venda.venda_quantidade
 
-            if novo_estoque < 0:
+            if venda.venda_quantidade > busca_produto['estoque']:
                 return {"erro": "Não há estoque suficiente do produto."}
 
             with self.connect_database() as conn:
@@ -117,7 +118,11 @@ class ProdutoRepository:
                 """
                 cur = conn.execute(query,(novo_estoque, produto.codigo))
 
-                return cur.rowcount > 0
+                return {
+                    "sucesso": cur.rowcount > 0,
+                    "estoque_atual": busca_produto['estoque'],
+                    "novo_estoque": novo_estoque
+                }
         except sql.Error as e:
             return {
                 "sucesso": False,
@@ -132,9 +137,6 @@ class ProdutoRepository:
         try:
             busca = self.buscar_produto(produto.codigo)
 
-            if busca is None:
-                return {"erro": "Produto não encontrado para exclusão."}
-
             with self.connect_database() as conn:
                 query = """
                 DELETE
@@ -146,8 +148,13 @@ class ProdutoRepository:
 
                 cur = conn.execute(query, (produto.codigo,))
 
-                return cur.rowcount > 0
-                
+                if busca is not None:
+                    return {
+                        "sucesso": cur.rowcount > 0,
+                        "msg": f"Produto {produto.nome_produto} deletado"
+                    }
+                else:
+                    return None
         except sql.Error as e:
             return {
                 "sucesso": False,
@@ -186,13 +193,10 @@ class ProdutoRepository:
         
     def atualizar_produto(self, produto: Produto) -> dict:
         if not isinstance(produto, Produto):
-            return {"sucesso": False, "dados": None, "erro": "Objeto inválido."}
+            return {"erro": "Objeto inválido."}
 
         try:
             busca = self.buscar_produto(produto.codigo)
-
-            if busca is None:
-                return {"erro": "Produto não encontrado para atualização."}
 
             with self.connect_database() as conn:
                 query = """
@@ -216,17 +220,20 @@ class ProdutoRepository:
                     produto.codigo
                 ))
 
-                return {
-                    "dados": {
-                        "codigo": produto.codigo,
-                        "nome": produto.nome_produto,
-                        "preco_unitario": produto.preco_unitario,
-                        "estoque": produto.estoque,
-                        "categoria": produto.categoria,
-                        "status": produto.status
+                if busca is not None:
+                    return {
+                        "dados": {
+                            "codigo": produto.codigo,
+                            "nome": produto.nome_produto,
+                            "preco_unitario": produto.preco_unitario,
+                            "estoque": produto.estoque,
+                            "categoria": produto.categoria,
+                            "status": produto.status
+                        }
                     }
-                }
-                
+                else:
+                    return None
+                    
         except sql.Error as e:
             return {
                 "sucesso": False,
@@ -239,6 +246,7 @@ class ProdutoRepository:
             with self.connect_database() as conn:
                 query = """
                     SELECT
+                        COUNT(codigo) AS produtos,
                         SUM(preco_unitario * estoque) AS valor_total_estoque
                     FROM
                         produtos
@@ -249,6 +257,7 @@ class ProdutoRepository:
 
                 if valor_total != 0.0:
                     return {
+                        "qtd_produtos": valor_total['produtos'],
                         "valor_total": round(valor_total['valor_total_estoque'], 2)
                     }
                 else:
