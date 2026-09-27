@@ -116,7 +116,7 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }   
 
-    def listar_vendas_finalizas(self):
+    def listar_vendas_finalizadas(self):
         try:
             with self.connect_database() as conn:
                 query = """
@@ -264,3 +264,91 @@ class VendaRepository:
                 "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
+
+    def total_vendas_iniciadas(self):
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        COUNT(venda_id) AS total_vendas
+                    FROM
+                        vendas_inicializadas
+                """
+
+                cur = conn.execute(query)
+                total_vendas = cur.fetchone()
+
+                return {"total_vendas_iniciadas": total_vendas['total_vendas']}
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+    def total_vendas_canceladas(self):
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        COUNT(venda_id) AS vendas_canceladas
+                    FROM
+                        vendas_inicializadas
+                    WHERE 
+                        status = 'cancelada'
+                """
+                cur = conn.execute(query)
+                vendas = cur.fetchone()
+
+                return {"vendas_canceladas": vendas['vendas_canceladas']}
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+    def total_vendas_finalizadas(self):
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        COUNT(id_venda) AS total_vendas_finalizadas
+                    FROM
+                        vendas_finalizadas
+                """
+                cur = conn.execute(query)
+                vendas = cur.fetchone()
+
+                return {"total_vendas": vendas['total_vendas_finalizadas']}
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+    def ticket_medio_vendas_finalizadas(self):
+        try:
+
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        SUM(valor_total) / COUNT(id_venda) AS ticket_medio
+                    FROM
+                        vendas_finalizadas
+                """
+
+                cur = conn.execute(query)
+                ticket = cur.fetchone()
+
+                return {
+                        "ticket_medio": round(ticket['ticket_medio'], 2)
+                    }
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
