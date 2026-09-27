@@ -39,7 +39,7 @@ class VendaService:
         })
         return self.carrinho
 
-    # A função e responsavel por retorna apenas o que precisa do carrinho
+    # A função e responsável por retorna apenas o que precisa do carrinho para API
     def carrinho_api(self, carrinho_atual: list[dict]) -> list:
         response = []
         for item in carrinho_atual:
@@ -48,6 +48,19 @@ class VendaService:
                 "preco_unitario": item['preco_unitario'],
                 "quantidade_venda": item['quantidade_venda'],
                 "valor_total_produto": item['valor_total_produto']
+            })
+
+        return response
+    
+    # A função e responsável por retorna apenas os dados que precisa para API
+    def response_api(self, _response: list[dict]):
+        response = []
+        for item in _response:
+            response.append({
+                "sucesso": item['sucesso'],
+                "carrinho": item['carrinho_atual'],
+                "msg": item['msg'],
+                "venda": item['venda']
             })
 
         return response
@@ -73,7 +86,6 @@ class VendaService:
         baixa_estoque = None
         response = []
 
-
         for item in itens_vendas:
 
             baixa_estoque = self.produto_service.baixa_estoque(
@@ -94,7 +106,6 @@ class VendaService:
 
             valor_total = self.calcular_valor_total_venda()
 
-
         response_carrinho = self.carrinho_api(carrinho_atual)
 
         resultado_repository = self.venda_repository.inicializar_vendas(
@@ -106,16 +117,15 @@ class VendaService:
             return resultado_repository
 
         self.carrinho.clear()
-
         response.append({
             "sucesso": True,
             "msg": "Venda iniciada com sucesso",
             "carrinho_atual": response_carrinho,
-            "dados": resultado_repository,
+            "venda": resultado_repository,
             "estoque": baixa_estoque['sucesso']
         })
 
-        return response
+        return self.response_api(response)
             
     def cancelar_venda(self, venda_iniciada: VendaInicializada):
         if not isinstance(venda_iniciada, VendaInicializada):
@@ -159,6 +169,7 @@ class VendaService:
         resultado_repository = self.venda_repository.finalizar_venda(
             venda_finalizada,
             buscar_venda['valor_total'],
+            troco,
             horario_mock=datetime.now().strftime("%H:%M"),
             data_mock=datetime.now().strftime("%d/%m/%Y")
         )
@@ -171,10 +182,8 @@ class VendaService:
         return {
             "sucesso": True,
             "venda": resultado_repository,
-            "troco": troco,
-            "status_venda": atualizar_status
+            "status_venda_iniciada": atualizar_status
         }
-
 
     def ler_imagem(self, path='qrcode.png'):
         with open(path, 'rb') as arq:
