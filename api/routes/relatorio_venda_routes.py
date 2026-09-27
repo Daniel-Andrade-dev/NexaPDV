@@ -40,7 +40,7 @@ def logs_vendas_canceladas():
 @relatorio_bp.route("/ticket_medio", methods=['GET'])
 def log_ticket_medio_vendas_finalizadas():
     try:
-        return jsonify(vendas_relatorios.ticket_medio_vendas()), 200
+        return jsonify(vendas_relatorios.ticket_medio_vendas_finalizadas()), 200
     except Exception as e:
         return jsonify({
             "msg": "Ocorreu um erro no servidor",
