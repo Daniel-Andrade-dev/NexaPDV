@@ -342,9 +342,16 @@ class VendaRepository:
                 cur = conn.execute(query)
                 ticket = cur.fetchone()
 
-                return {
+                # Se o ticket retorna None ou null significa que é = 0
+                if ticket['ticket_medio'] is None:
+                    return {
+                        "ticket_medio": 0.0
+                    }
+                else:
+                    return {
                         "ticket_medio": round(ticket['ticket_medio'], 2)
                     }
+                    
         except sql.Error as e:
             return {
                 "sucesso": False,
