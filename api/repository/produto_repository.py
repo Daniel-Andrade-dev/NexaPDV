@@ -86,7 +86,7 @@ class ProdutoRepository:
                         "status": produto["status"]
                     }
                 else:
-                    return None
+                    return {"erro": "Produto não encontrado"}
         except sql.Error as e:
             return {
                 "erro": f"Erro de banco de dados: {str(e)}"
@@ -261,7 +261,32 @@ class ProdutoRepository:
                         "valor_total": round(valor_total['valor_total_estoque'], 2)
                     }
                 else:
-                    return 0.0
+                    return {
+                        "qtd_produtos": valor_total['produtos'],
+                        "valor_total": 0.0
+                    }
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Ocorreu um erro ao atualizar o produto: {str(e)}"
+            } 
+
+    def total_produtos_ativos(self):
+        try:
+            with self.connect_database() as conn:
+                query = """
+                SELECT
+                    COUNT(codigo) AS produtos_ativos
+                FROM
+                    produtos
+                WHERE
+                    status = 'ativo'
+                """
+
+                cur = conn.execute(query)
+                produtos_ativos = cur.fetchone()
+                return {"produto_ativos": produtos_ativos['produtos_ativos']}
         except sql.Error as e:
             return {
                 "sucesso": False,
