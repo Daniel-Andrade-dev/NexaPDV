@@ -230,7 +230,12 @@ class VendaRepository:
 
                 return {
                     "sucesso": cur.rowcount > 0,
-                    "msg": "Venda cancelada com sucesso"
+                    "msg": "Venda cancelada com sucesso",
+                    "venda": {
+                        "venda_id": buscar_venda['venda_id'],
+                        "status_venda": venda_iniciada.status,
+                        "valor_total": buscar_venda['valor_total']
+                    }
                 }
         except sql.Error as e:
             return {
