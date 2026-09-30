@@ -1,5 +1,5 @@
 from flask import jsonify, request, Blueprint
-from api.models.venda.venda import VendaInicializada, ItensVendasIniciada, VendaFinalizada
+from api.models.venda.venda import VendaInicializada, VendaFinalizada
 from api.models.produto.produto import Produto
 from api.services.venda_service import VendaService
 from api.services.produto_service import ProdutoService
@@ -69,6 +69,9 @@ def finalizar_venda(venda_id: int):
             return jsonify({"erro": "Corpo da requisição inválida"}), 400
 
         busca_venda_iniciada = venda_service.buscar_venda_iniciada(venda_id)
+
+        if not busca_venda_iniciada:
+            return jsonify({"erro": "Venda não encontrada"}), 404
 
         venda_finalizada = VendaFinalizada(
             id_venda=None,
@@ -147,7 +150,7 @@ def cancelar_venda(venda_id: int):
         resultado_busca = venda_service.buscar_venda_iniciada(venda_id)
 
         if resultado_busca is None:
-            return {"erro": "Venda não encontrada"}
+            return jsonify({"erro": "Venda não encontrada"}), 404
 
         venda_iniciada = VendaInicializada(
             resultado_busca['venda_id'],
