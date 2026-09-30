@@ -1,4 +1,4 @@
-from api.models.venda.venda import ItensVendasIniciada, VendaFinalizada, VendaInicializada
+from api.models.venda.venda import VendaFinalizada, VendaInicializada
 from api.models.produto.produto import Produto
 from api.enums.forma_pagamento import FormaPagamentos
 from api.enums.status_produto import StatusProduto
@@ -136,6 +136,9 @@ class VendaService:
         if buscar_venda['status'] == StatusVenda.CONCLUIDA:
             return {"erro": "Não e possível cancelar vendas concluídas"}
 
+        if buscar_venda['status'] == StatusVenda.CANCELADA:
+            return {"erro": "A venda já está cancelada. Tente novamente"}
+
         resultado_repository = self.venda_repository.cancelar_venda(venda_iniciada)
 
         return resultado_repository
@@ -166,6 +169,9 @@ class VendaService:
             if isinstance(troco, dict) and "erro" in troco:
                 return troco
 
+
+        # Se a forma de pagamento não for dinheiro automaticamente será inserida no banco
+        # Sendo débito ou crédito
         resultado_repository = self.venda_repository.finalizar_venda(
             venda_finalizada,
             buscar_venda['valor_total'],
@@ -185,10 +191,10 @@ class VendaService:
             "status_venda_iniciada": atualizar_status
         }
 
-    def ler_imagem(self, path='qrcode.png'):
-        with open(path, 'rb') as arq:
-            img = arq.read()
-        return img 
+    # def ler_imagem(self, path='qrcode.png'):
+    #     with open(path, 'rb') as arq:
+    #         img = arq.read()
+    #     return img 
 
     def gerar_qrcode(self):
         img = qrcode.make("Pagamento feito com sucesso")
@@ -209,10 +215,14 @@ class VendaService:
         
         if buscar_venda['status'] == StatusVenda.CANCELADA:
             return {"erro": "Não e possível finalizar vendas canceladas"}
+
+        if venda_finalizada.forma_pagamento != FormaPagamentos.PIX:
+            return {"erro": "Apenas pagamentos em PIX são permitidos"}
         
         resultado_repository = self.venda_repository.finalizar_venda(
             venda_finalizada,
             buscar_venda['valor_total'],
+            troco=0.0,
             horario_mock=datetime.now().strftime("%H:%M"),
             data_mock=datetime.now().strftime("%d/%m/%Y")
         )
