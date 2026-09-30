@@ -15,3 +15,13 @@ def log_total_estoque():
             "msg": "Ocorreu um erro no servidor",
             "erro": str(e)
         }), 500
+
+@relatorio_produto_bp.route("/produtos_ativos", methods=['GET'])
+def log_total_produtos_ativos():
+    try:
+        return jsonify(produtos_relatorio.total_produtos_ativos()), 200
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500  
