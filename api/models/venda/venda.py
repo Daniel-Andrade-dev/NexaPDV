@@ -12,14 +12,6 @@ class VendaInicializada:
     status: StatusVenda = StatusVenda.ABERTA
 
 @dataclass
-class ItensVendasIniciada:
-    item_id: int 
-    venda_id: int
-    codigo_produto: int
-    venda_quantidade: int
-    preco_unitario: float 
-
-@dataclass
 class VendaFinalizada:
     id_venda: int 
     forma_pagamento: FormaPagamentos

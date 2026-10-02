@@ -1,5 +1,4 @@
 from api.models.venda.venda import VendaInicializada, VendaFinalizada
-from api.models.produto.produto import Produto
 from api.database.connections import ConnectionDataBase
 import sqlite3 as sql
 
@@ -34,12 +33,35 @@ class VendaRepository:
 
                     venda_id = cur.lastrowid
 
-                return {
-                    "venda_id": venda_id,
-                    "iniciada_em": f"{item['data_inicializada']}T{item['horario_inicializada']}",
-                    "status": item['status'],
-                    "valor_total_venda": valor_total
-                }
+                    dados_itens = [
+                        (
+                            venda_id,
+                            item["codigo_produto"],
+                            item["quantidade_venda"],
+                            item["preco_unitario"],
+                            item['valor_total_produto']
+                        )
+                        for item in items
+                    ]
+
+                    query_itens_venda = """
+                        INSERT INTO itens_venda_inicializada (
+                            venda_id,
+                            codigo_produto,
+                            venda_quantidade,
+                            preco_unitario,
+                            valor_total_produto
+                        ) VALUES(?,?,?,?,?)
+                    """
+
+                    conn.executemany(query_itens_venda, dados_itens)
+
+                    return {    
+                        "venda_id": venda_id,
+                        "iniciada_em": f"{item['data_inicializada']}T{item['horario_inicializada']}",
+                        "status": item['status'],
+                        "valor_total_venda": valor_total
+                    }
         except sql.Error as e:
             return {
                 "erro": f"Erro de banco de dados: {str(e)}"

@@ -53,6 +53,7 @@ class Tabelas:
                 codigo_produto INTEGER NOT NULL,
                 venda_quantidade INTEGER NOT NULL,
                 preco_unitario NUMERIC(10,2) NOT NULL,
+                valor_total_produto NUMERIC(10,2) NOT NULL,
                 FOREIGN KEY (venda_id) REFERENCES vendas_inicializadas(venda_id),
                 FOREIGN KEY (codigo_produto) REFERENCES produtos(codigo)
             )

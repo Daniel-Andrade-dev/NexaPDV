@@ -29,6 +29,7 @@ class VendaService:
             return {"erro": f"Produto {produto.nome_produto} está inativo no estoque"}
 
         self.carrinho.append({
+            "codigo_produto": produto.codigo,
             "nome_produto": produto.nome_produto,
             "preco_unitario": produto.preco_unitario,
             "quantidade_venda": venda.venda_quantidade,
@@ -44,6 +45,7 @@ class VendaService:
         response = []
         for item in carrinho_atual:
             response.append({
+                "codigo_produto": item['codigo_produto'],
                 "nome_produto": item['nome_produto'],
                 "preco_unitario": item['preco_unitario'],
                 "quantidade_venda": item['quantidade_venda'],
@@ -122,7 +124,7 @@ class VendaService:
             "msg": "Venda iniciada com sucesso",
             "carrinho_atual": response_carrinho,
             "venda": resultado_repository,
-            "estoque": baixa_estoque['sucesso']
+            "estoque": baixa_estoque['sucesso'],
         })
 
         return self.response_api(response)

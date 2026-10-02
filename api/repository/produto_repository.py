@@ -105,7 +105,7 @@ class ProdutoRepository:
             novo_estoque = int(busca_produto['estoque']) - venda.venda_quantidade
 
             if venda.venda_quantidade > busca_produto['estoque']:
-                return {"erro": "Não há estoque suficiente do produto."}
+                return {"erro": f"Não há estoque suficiente do produto {produto.nome_produto} código {produto.codigo}."}
 
             with self.connect_database() as conn:
                 query = """
