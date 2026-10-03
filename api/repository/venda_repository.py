@@ -192,6 +192,45 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
+
+    # A função e usada para exibir os produtos comprados no comprovante
+    def buscar_itens_venda(self, venda_id: int):
+        try:
+            buscar_venda = self.buscar_venda_inicializada(venda_id)
+
+            if buscar_venda is None:
+                return {"erro": "Venda não encontrada"}
+
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        it.item_id,
+                        p.nome_produto,
+                        it.venda_quantidade,
+                        it.valor_total_produto
+                    FROM
+                        itens_venda_inicializada it
+                    INNER JOIN 
+                        produtos p ON p.codigo = it.codigo_produto
+                    INNER JOIN 
+                        vendas_inicializadas v ON v.venda_id = it.venda_id
+                    WHERE
+                        v.venda_id = ?
+                """
+
+                cur = conn.execute(query, (venda_id,))
+                itens = cur.fetchall()
+
+                return [dict(item) for item in itens]
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+
+
     def atualizar_status_venda(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada) -> dict | bool:
         try:
             buscar_venda = self.buscar_venda_inicializada(venda_iniciada.venda_id)

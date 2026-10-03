@@ -6,6 +6,7 @@ from api.enums.status_venda import StatusVenda
 from api.repository.venda_repository import VendaRepository
 from api.services.produto_service import ProdutoService
 from api.validator.validator import Validator
+from api.services.classes.comprovante import Comprovante
 from datetime import datetime
 import qrcode
 import base64
@@ -16,6 +17,7 @@ class VendaService:
     def __init__(self, venda_repository=None):
         self.venda_repository = venda_repository or VendaRepository()
         self.produto_service = ProdutoService()
+        self.comprovante = Comprovante()
         self.carrinho = []
 
     def adicionar_ao_carrinho(self, venda: VendaInicializada, produto: Produto) -> list:
@@ -41,7 +43,7 @@ class VendaService:
         return self.carrinho
 
     # A função e responsável por retorna apenas o que precisa do carrinho para API
-    def carrinho_api(self, carrinho_atual: list[dict]) -> list:
+    def carrinho_api(self, carrinho_atual: list[dict] | None) -> list:
         response = []
         for item in carrinho_atual:
             response.append({
@@ -68,7 +70,12 @@ class VendaService:
         return response
 
     def calcular_valor_total_venda(self) -> float:
-        return round(sum(item['preco_unitario'] * item['quantidade_venda'] for item in self.carrinho), 2)
+        return round(
+            sum(
+                item['preco_unitario'] * item['quantidade_venda'] 
+                for item in self.carrinho
+            ), 
+        2)
 
     def calcular_troco_e_verificar(self, valor_total, valor_dinheiro: float) -> dict | float:
         if valor_dinheiro < valor_total:
@@ -84,7 +91,6 @@ class VendaService:
     def inicializar_venda(self, itens_vendas: list[dict]):
 
         carrinho_atual = self.carrinho
-        valor_total = 0.0
         baixa_estoque = None
         response = []
 
@@ -106,7 +112,7 @@ class VendaService:
             if isinstance(carrinho_atual, dict) and "erro" in carrinho_atual:
                 return carrinho_atual
 
-            valor_total = self.calcular_valor_total_venda()
+        valor_total = self.calcular_valor_total_venda()
 
         response_carrinho = self.carrinho_api(carrinho_atual)
 
@@ -128,7 +134,7 @@ class VendaService:
         })
 
         return self.response_api(response)
-            
+    
     def cancelar_venda(self, venda_iniciada: VendaInicializada):
         if not isinstance(venda_iniciada, VendaInicializada):
             return {"erro": "Objeto inválido"}
@@ -151,8 +157,9 @@ class VendaService:
             return {"erro": "Objeto inválido. Esperado tipo Venda"}
 
         buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
+        buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada.venda_id)
 
-        if not buscar_venda: 
+        if not buscar_venda and not buscar_itens_venda: 
             return {"erro": "Venda não encontrada"}
 
         if buscar_venda['status'] == StatusVenda.CONCLUIDA:
@@ -182,6 +189,8 @@ class VendaService:
             data_mock=datetime.now().strftime("%d/%m/%Y")
         )
 
+        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
+        
         atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
 
         if isinstance(atualizar_status, dict) and "erro" in atualizar_status:
@@ -190,13 +199,10 @@ class VendaService:
         return {
             "sucesso": True,
             "venda": resultado_repository,
+            "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
             "status_venda_iniciada": atualizar_status
         }
 
-    # def ler_imagem(self, path='qrcode.png'):
-    #     with open(path, 'rb') as arq:
-    #         img = arq.read()
-    #     return img 
 
     def gerar_qrcode(self):
         img = qrcode.make("Pagamento feito com sucesso")
@@ -206,7 +212,7 @@ class VendaService:
         
         img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
         
-        return img_base64
+        return {"qrcode":img_base64}
 
     def finalizar_venda_pix(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada):
 
@@ -237,7 +243,6 @@ class VendaService:
         return {
             "sucesso": True,
             "venda": resultado_repository,
-            "qrcode": self.gerar_qrcode(),
             "status_venda": atualizar_status
         }
     

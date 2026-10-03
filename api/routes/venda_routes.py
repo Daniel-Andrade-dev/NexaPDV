@@ -23,7 +23,8 @@ def inicializar_venda():
 
         for item in payload['itens']:
             produto_buscado = produto_service.buscar_produto(item['codigo_produto'])
-            if not produto_buscado or "erro" in produto_buscado:
+            
+            if not produto_buscado:
                 return jsonify({"erro": "Produto não encontrado"}), 404
 
             venda = VendaInicializada(
@@ -58,7 +59,6 @@ def inicializar_venda():
             "msg": "Ocorreu um erro no servidor",
             "erro": str(e)
         }), 500
-        
 
 @venda_bp.route("/finalizar_venda/<int:venda_id>", methods=["POST"])
 def finalizar_venda(venda_id: int):
@@ -143,7 +143,10 @@ def finalizar_venda_pix(venda_id: int):
             "erro": str(e)
         }), 500   
 
-    
+@venda_bp.route("/qrcode/pix", methods=['GET'])
+def qrcode():
+    return jsonify(venda_service.gerar_qrcode()), 200
+
 @venda_bp.route("/cancelar_venda/<int:venda_id>", methods=["PUT"])
 def cancelar_venda(venda_id: int):
     try:
