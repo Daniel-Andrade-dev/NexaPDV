@@ -50,11 +50,7 @@ def cadastrar_produto():
 @produto_bp.route("/produtos", methods=["GET"])
 def produtos_cadastrados():
     try:
-        produtos = produto_service.produtos_cadastrados()
-
-        if produtos:
-            return jsonify(produtos), 200
-        return jsonify({"erro": "Não há produtos no momento"}), 404
+        return jsonify(produto_service.produtos_cadastrados()), 200
     except Exception as e:
         return jsonify({
             "msg": "Ocorreu um erro no servidor",
@@ -127,7 +123,6 @@ def atualizar_produto(codigo: int):
             nome=categoria_buscada['nome'],
             status=categoria_buscada['status']    
         )
-
 
         resultado_service = produto_service.atualizar_produto(categoria, produto)
 

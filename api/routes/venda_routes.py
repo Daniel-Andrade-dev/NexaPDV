@@ -89,10 +89,9 @@ def finalizar_venda(venda_id: int):
             status=busca_venda_iniciada['status']
         )
 
-
         resultado_service = venda_service.finalizar_venda(venda_finalizada, venda_iniciada, payload['valor_dinheiro'])
 
-        if isinstance(resultado_service, dict) and "erro" in resultado_service:
+        if "erro" in resultado_service:
             return jsonify(resultado_service), 400
         return jsonify(resultado_service), 201
     except Exception as e:

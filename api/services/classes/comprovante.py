@@ -4,11 +4,7 @@ import os
 
 class Comprovante:
 
-    def criar_arquivo_comprovante(
-        self,
-        venda_iniciada: VendaInicializada,
-        comprovante: str
-    ) -> dict:
+    def criar_arquivo_comprovante(self,venda_iniciada: VendaInicializada,comprovante: str) -> dict:
         path = "comprovantes"
 
         os.makedirs(path, exist_ok=True)
@@ -24,13 +20,7 @@ class Comprovante:
             "arquivo": arquivo
         }
 
-    def modelo_comprovante(
-        self,
-        itens,
-        troco,
-        venda_iniciada: VendaInicializada,
-        venda_finalizada: VendaFinalizada
-    ) -> str:
+    def modelo_comprovante(self, itens: list[dict], troco: float, venda_iniciada: VendaInicializada, venda_finalizada: VendaFinalizada) -> str:
         emissao = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
         produtos = ""

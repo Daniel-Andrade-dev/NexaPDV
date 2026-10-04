@@ -22,9 +22,9 @@ def adicionar_categoria():
 
         resultado_service = categoria_service.adicionar_categoria(categoria)
 
-        if "erro" not in resultado_service:
-            return jsonify(resultado_service), 201
-        return jsonify(resultado_service), 400
+        if "erro" in resultado_service:
+            return jsonify(resultado_service), 400
+        return jsonify(resultado_service), 201
     except Exception as e:
         return jsonify({
             "msg": "Ocorreu um erro no servidor",
@@ -34,7 +34,6 @@ def adicionar_categoria():
 @categoria_bp.route("/categorias/<int:categoria_id>", methods=["GET"])
 def buscar_categoria(categoria_id: int):
     try:
-
         resultado_service = categoria_service.buscar_categoria_id(categoria_id)
 
         if resultado_service is None:

@@ -10,7 +10,7 @@ class CategoriaRepository:
     def connect_database(self):
         return ConnectionDataBase().connect_sql()
 
-    def adicionar_categoria(self, categoria: Categoria):
+    def adicionar_categoria(self, categoria: Categoria) -> dict:
 
         if not isinstance(categoria, Categoria):
             return {"erro": "Objeto inválido. Esperado tipo categoria"}
@@ -41,7 +41,7 @@ class CategoriaRepository:
                 }
         except sql.IntegrityError:
             return {
-                "erro": "Categoria já está cadastrada. Tente novamente"
+                "erro": f"Categoria {categoria.nome} já está cadastrada. Tente novamente"
             }
         except sql.Error as e:
             return {
@@ -69,11 +69,13 @@ class CategoriaRepository:
                 return dict(categoria) if categoria else None
         except sql.Error as e:
             return {
+                "sucesso": False,
+                "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
-   
 
-    def deletar_categoria(self, categoria: Categoria):
+   
+    def deletar_categoria(self, categoria: Categoria) -> dict:
 
         if not isinstance(categoria, Categoria):
             return {"erro": "Objeto inválido. Esperado tipo categoria"}
@@ -97,11 +99,13 @@ class CategoriaRepository:
                 return cur.rowcount > 0
         except sql.Error as e:
             return {
+                "sucesso": False,
+                "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
-   
 
-    def atualizar_categoria(self, categoria: Categoria):
+   
+    def atualizar_categoria(self, categoria: Categoria) -> dict:
 
         if not isinstance(categoria, Categoria):
             return {"erro": "Objeto inválido. Esperado tipo categoria"}
@@ -135,8 +139,11 @@ class CategoriaRepository:
                 }
         except sql.Error as e:
             return {
+                "sucesso": False,
+                "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
+
 
     def listar_categorias(self):
         try:
@@ -156,5 +163,8 @@ class CategoriaRepository:
                 return [dict(categoria) for categoria in categorias]
         except sql.Error as e:
             return {
+                "sucesso": False,
+                "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
+

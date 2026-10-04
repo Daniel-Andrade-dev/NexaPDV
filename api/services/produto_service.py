@@ -25,7 +25,7 @@ class ProdutoService:
             return {"erro": "Há campos vazios que precisam ser preenchidos."}
 
         if not Validator.validar_negativos([produto.preco_unitario, produto.estoque]):
-            return {"erro": "Informe valores acima de 0 para preço e estoque."}
+            return {"erro": "Informe valores acima de 0"}
 
         if produto.status not in [status.value for status in StatusProduto]:
             return {"erro": "Status inválido. Apenas (ATIVO OU INATIVO)"}

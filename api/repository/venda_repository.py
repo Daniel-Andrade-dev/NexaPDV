@@ -40,8 +40,10 @@ class VendaRepository:
                     }
         except sql.Error as e:
             return {
+                "sucesso": False,
+                "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
-            }
+            } 
 
     def inserir_itens_venda(self, itens: list[dict], venda_id) -> None:
 

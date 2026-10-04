@@ -99,8 +99,10 @@ class ProdutoRepository:
                     return None
         except sql.Error as e:
             return {
+                "sucesso": False,
+                "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
-            }
+            } 
     
     def baixa_estoque(self, produto: Produto, venda: VendaInicializada) -> dict | bool:
         if not isinstance(venda, VendaInicializada):
@@ -251,7 +253,7 @@ class ProdutoRepository:
                 "erro": f"Ocorreu um erro ao atualizar o produto: {str(e)}"
             }
 
-    def total_estoque(self):
+    def total_estoque(self) -> dict:
         try:
             with self.connect_database() as conn:
                 query = """
@@ -281,7 +283,7 @@ class ProdutoRepository:
                 "erro": f"Ocorreu um erro ao atualizar o produto: {str(e)}"
             } 
 
-    def total_produtos_ativos(self):
+    def total_produtos_ativos(self) -> dict:
         try:
             with self.connect_database() as conn:
                 query = """

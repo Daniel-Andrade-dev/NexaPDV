@@ -12,7 +12,7 @@ class CategoriaService:
     def adicionar_categoria(self, categoria: Categoria) -> dict:
 
         if not isinstance(categoria, Categoria):
-            return {"erro": "Objeto inválido"}
+            return {"erro": "Objeto inválido. Esperado tipo Categoria"}
 
         if not Validator.validar_campos([categoria.status]):
             return {"erro": "Há campos vazios que precisam ser preenchidos."}
@@ -22,10 +22,9 @@ class CategoriaService:
 
         return self.categoria_repository.adicionar_categoria(categoria)
 
-        
     def atualizar_categoria(self, categoria: Categoria) -> dict:
         if not isinstance(categoria, Categoria):
-            return {"erro": "Objeto inválido"}
+            return {"erro": "Objeto inválido. Esperado tipo Categoria"}
 
         if not Validator.validar_campos([categoria.status]):
             return {"erro": "Há campos vazios que precisam ser preenchidos."}
@@ -40,14 +39,11 @@ class CategoriaService:
 
     def buscar_categoria_id(self, categoria_id: int) -> dict | None:
         return self.categoria_repository.buscar_categoria_id(categoria_id)
-
-    def buscar_categoria_nome(self, nome: str) -> dict | None:
-        return self.categoria_repository.buscar_categoria_nome(nome)
-    
+ 
     def deletar_categoria(self, categoria: Categoria) -> dict | bool:
 
         if not isinstance(categoria, Categoria):
-            return {"erro": "Objeto inválido. Esperado tipo categoria"}
+            return {"erro": "Objeto inválido. Esperado tipo Categoria"}
 
         return self.categoria_repository.deletar_categoria(categoria)
 
