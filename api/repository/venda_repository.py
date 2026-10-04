@@ -9,7 +9,6 @@ class VendaRepository:
         return ConnectionDataBase().connect_sql()
 
     def inicializar_vendas(self, items: list[dict], valor_total: float) -> dict:
-
         try:
             for item in items:
                 with self.connect_database() as conn:
@@ -67,9 +66,8 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
-
         
-    def finalizar_venda(self, venda: VendaFinalizada, valor_total, troco, horario_mock, data_mock):
+    def finalizar_venda(self, venda: VendaFinalizada, valor_total: float, troco: float, horario, data):
         try:
             if not isinstance(venda, VendaFinalizada):
                 return {'erro': 'Objeto inválido'}
@@ -91,22 +89,22 @@ class VendaRepository:
                     valor_total,
                     venda.valor_pago,
                     venda.status,
-                    horario_mock,
-                    data_mock
+                    horario,
+                    data
                 ))
 
                 venda_id = cur.lastrowid
 
-            return {
-                "venda_id": venda_id,
-                "finalizada_em": f"{data_mock}T{horario_mock}",
-                "pagamento": {
-                    "forma": venda.forma_pagamento,
-                    "valor_pago": venda.valor_pago,
-                    "troco": troco
-                },
-                "status_venda_finalizada": venda.status,
-            }
+                return {
+                    "venda_id": venda_id,
+                    "finalizada_em": f"{data}T{horario}",
+                    "pagamento": {
+                        "forma": venda.forma_pagamento,
+                        "valor_pago": venda.valor_pago,
+                        "troco": troco
+                    },
+                    "status_venda_finalizada": venda.status,
+                }
         except sql.Error as e:
             return {
                 "sucesso": False,
@@ -163,7 +161,8 @@ class VendaRepository:
                 "sucesso": False,
                 "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
-            } 
+            }
+         
     def buscar_venda_inicializada(self, venda_id: int):
         try:
             with self.connect_database() as conn:
@@ -194,7 +193,7 @@ class VendaRepository:
 
 
     # A função e usada para exibir os produtos comprados no comprovante
-    def buscar_itens_venda(self, venda_id: int):
+    def buscar_itens_venda(self, venda_id: int) -> dict | list[dict]:
         try:
             buscar_venda = self.buscar_venda_inicializada(venda_id)
 
@@ -228,7 +227,6 @@ class VendaRepository:
                 "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
-
 
 
     def atualizar_status_venda(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada) -> dict | bool:
@@ -331,7 +329,7 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
-    def total_vendas_iniciadas(self):
+    def total_vendas_iniciadas(self) -> dict:
         try:
             with self.connect_database() as conn:
                 query = """
@@ -352,7 +350,7 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
-    def total_vendas_canceladas(self):
+    def total_vendas_canceladas(self) -> dict:
         try:
             with self.connect_database() as conn:
                 query = """
@@ -374,7 +372,7 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
-    def total_vendas_finalizadas(self):
+    def total_vendas_finalizadas(self) -> dict:
         try:
             with self.connect_database() as conn:
                 query = """
@@ -394,7 +392,7 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
-    def ticket_medio_vendas_finalizadas(self):
+    def ticket_medio_vendas_finalizadas(self) -> dict:
         try:
 
             with self.connect_database() as conn:
@@ -410,18 +408,12 @@ class VendaRepository:
 
                 # Se o ticket retorna None ou null significa que é = 0
                 if ticket['ticket_medio'] is None:
-                    return {
-                        "ticket_medio": 0.0
-                    }
+                    return {"ticket_medio": 0.0}
                 else:
-                    return {
-                        "ticket_medio": round(ticket['ticket_medio'], 2)
-                    }
-                    
+                    return {"ticket_medio": round(ticket['ticket_medio'], 2)}
         except sql.Error as e:
             return {
                 "sucesso": False,
                 "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
-

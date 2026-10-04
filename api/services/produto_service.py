@@ -12,9 +12,7 @@ class ProdutoService:
     def cadastrar_produto(self, produto: Produto) -> dict:
 
         if not isinstance(produto, Produto): 
-            return {
-                "erro": "Objeto inválido. Esperado tipo Produto."
-            }
+            return {"erro": "Objeto inválido. Esperado tipo Produto."}
 
         if not Validator.validar_campos([
             produto.nome_produto,
@@ -22,23 +20,17 @@ class ProdutoService:
             produto.estoque,
             produto.status
         ]):
-            return {
-                "erro": "Há campos vazios que precisam ser preenchidos."
-            }
+            return {"erro": "Há campos vazios que precisam ser preenchidos."}
 
         if not Validator.validar_negativos([produto.preco_unitario, produto.estoque]):
-            return {
-                "erro": "Informe valores acima de 0 para preço e estoque."
-            }
+            return {"erro": "Informe valores acima de 0 para preço e estoque."}
 
         if produto.status not in [status.value for status in StatusProduto]:
-            return {
-                "erro": "Status inválido. Apenas (ATIVO OU INATIVO)"
-            }
+            return {"erro": "Status inválido. Apenas (ATIVO OU INATIVO)"}
         
         return self.produto_repository.inserir_produto(produto=produto)
 
-    def produtos_cadastrados(self):
+    def produtos_cadastrados(self) -> dict | list[dict]:
         return self.produto_repository.listar_produtos()
 
     def buscar_produto(self, codigo: int) -> dict:
@@ -47,9 +39,7 @@ class ProdutoService:
     def atualizar_produto(self, produto: Produto) -> dict:
 
         if not isinstance(produto, Produto):
-            return {
-                "erro": "Objeto inválido. Esperado tipo Produto."
-            }
+            return {"erro": "Objeto inválido. Esperado tipo Produto."}
 
         if not Validator.validar_campos([
             produto.nome_produto,
@@ -57,29 +47,20 @@ class ProdutoService:
             produto.estoque,
             produto.status
         ]):
-            return {
-                "erro": "Há campos vazios que precisam ser preenchidos."
-            }
+            return {"erro": "Há campos vazios que precisam ser preenchidos."}
         
         if not Validator.validar_negativos([produto.preco_unitario, produto.estoque]):
-            return {
-                "erro": "Informe valores acima de 0 para preço e estoque."
-            }
+            return {"erro": "Informe valores acima de 0 para preço e estoque."}
         
         if produto.status not in [status.value for status in StatusProduto]:
-            return {
-                "erro": "Status inválido. Apenas (ATIVO OU INATIVO)"
-            }
+            return {"erro": "Status inválido. Apenas (ATIVO OU INATIVO)"}
         
-
         return self.produto_repository.atualizar_produto(produto=produto)
 
-    def deletar_produto(self, produto: Produto):
+    def deletar_produto(self, produto: Produto) -> dict | bool:
         
         if not isinstance(produto, Produto):
-            return {
-                "erro": "Objeto inválido. Esperado tipo Produto."
-            }
+            return {"erro": "Objeto inválido. Esperado tipo Produto."}
 
         return self.produto_repository.deletar_produto(produto)
 

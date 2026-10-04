@@ -34,12 +34,10 @@ def adicionar_categoria():
         }), 500
 
 @categoria_bp.route("/categorias/<int:categoria_id>", methods=["GET"])
-def buscar_categoria(categoria_id):
+def buscar_categoria(categoria_id: int):
     try:
 
-        resultado_service = categoria_service.buscar_categoria_id(
-            categoria_id
-        )
+        resultado_service = categoria_service.buscar_categoria_id(categoria_id)
 
         if resultado_service is None:
             return jsonify({"erro": "Categoria não encontrada"}), 404
@@ -53,8 +51,7 @@ def buscar_categoria(categoria_id):
 @categoria_bp.route("/categoria", methods=["GET"])
 def listar_categorias():
     try:
-        categorias = categoria_service.categorias_cadastradas()
-        return jsonify(categorias), 200
+        return jsonify(categoria_service.categorias_cadastradas()), 200
     except Exception as e:
         return jsonify({
             "msg": "Ocorreu um erro no servidor",

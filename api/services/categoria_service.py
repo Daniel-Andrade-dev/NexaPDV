@@ -22,7 +22,7 @@ class CategoriaService:
         return self.categoria_repository.adicionar_categoria(categoria)
 
         
-    def atualizar_categoria(self, categoria: Categoria):
+    def atualizar_categoria(self, categoria: Categoria) -> dict:
         if not isinstance(categoria, Categoria):
             return {"erro": "Objeto inválido"}
 
@@ -34,16 +34,16 @@ class CategoriaService:
 
         return self.categoria_repository.atualizar_categoria(categoria)
 
-    def categorias_cadastradas(self):
+    def categorias_cadastradas(self) -> list[dict] | dict:
         return self.categoria_repository.listar_categorias()
 
-    def buscar_categoria_id(self, categoria_id: int):
+    def buscar_categoria_id(self, categoria_id: int) -> dict | None:
         return self.categoria_repository.buscar_categoria_id(categoria_id)
 
-    def buscar_categoria_nome(self, nome: str):
+    def buscar_categoria_nome(self, nome: str) -> dict | None:
         return self.categoria_repository.buscar_categoria_nome(nome)
     
-    def deletar_categoria(self, categoria: Categoria):
+    def deletar_categoria(self, categoria: Categoria) -> dict | bool:
 
         if not isinstance(categoria, Categoria):
             return {"erro": "Objeto inválido. Esperado tipo categoria"}

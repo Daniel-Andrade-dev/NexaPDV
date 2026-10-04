@@ -37,7 +37,7 @@ def logs_vendas_canceladas():
             "erro": str(e)
         }), 500
 
-@relatorio_bp.route("/ticket_medio", methods=['GET'])
+@relatorio_bp.route("/vendas_finalizadas/ticket_medio", methods=['GET'])
 def log_ticket_medio_vendas_finalizadas():
     try:
         return jsonify(vendas_relatorios.ticket_medio_vendas_finalizadas()), 200

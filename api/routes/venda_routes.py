@@ -102,7 +102,6 @@ def finalizar_venda(venda_id: int):
         }), 500
         
 
-
 @venda_bp.route("/finalizar_venda/pix/<int:venda_id>", methods=["POST"])
 def finalizar_venda_pix(venda_id: int):
     try:
@@ -168,7 +167,6 @@ def cancelar_venda(venda_id: int):
         if "erro" in resultado_service:
             return jsonify(resultado_service), 400
         return jsonify(resultado_service), 200
-    
     except Exception as e:
         return jsonify({
             "msg": "Ocorreu um erro no servidor",

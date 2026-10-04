@@ -1,8 +1,6 @@
 from api.models.venda.venda import VendaFinalizada, VendaInicializada
 from datetime import datetime
 import os
-import textwrap
-
 
 class Comprovante:
 
@@ -10,7 +8,7 @@ class Comprovante:
         self,
         venda_iniciada: VendaInicializada,
         comprovante: str
-    ):
+    ) -> dict:
         path = "comprovantes"
 
         os.makedirs(path, exist_ok=True)
@@ -32,7 +30,7 @@ class Comprovante:
         troco,
         venda_iniciada: VendaInicializada,
         venda_finalizada: VendaFinalizada
-    ):
+    ) -> str:
         emissao = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
         produtos = ""

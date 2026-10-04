@@ -43,7 +43,7 @@ class VendaService:
         return self.carrinho
 
     # A função e responsável por retorna apenas o que precisa do carrinho para API
-    def carrinho_api(self, carrinho_atual: list[dict] | None) -> list:
+    def carrinho_api(self, carrinho_atual: list[dict]) -> list:
         response = []
         for item in carrinho_atual:
             response.append({
@@ -57,7 +57,7 @@ class VendaService:
         return response
     
     # A função e responsável por retorna apenas os dados que precisa para API
-    def response_api(self, _response: list[dict]):
+    def response_api(self, _response: list[dict]) -> list:
         response = []
         for item in _response:
             response.append({
@@ -88,7 +88,7 @@ class VendaService:
     def buscar_venda_iniciada(self, venda_id) -> dict:
         return self.venda_repository.buscar_venda_inicializada(venda_id)
 
-    def inicializar_venda(self, itens_vendas: list[dict]):
+    def inicializar_venda(self, itens_vendas: list[dict]) -> dict | list:
 
         carrinho_atual = self.carrinho
         baixa_estoque = None
@@ -96,18 +96,12 @@ class VendaService:
 
         for item in itens_vendas:
 
-            baixa_estoque = self.produto_service.baixa_estoque(
-                item['produto_obj'],
-                item['venda_obj']
-            )
+            baixa_estoque = self.produto_service.baixa_estoque(item['produto_obj'],item['venda_obj'])
 
             if isinstance(baixa_estoque, dict) and "erro" in baixa_estoque:
                 return baixa_estoque
 
-            carrinho_atual = self.adicionar_ao_carrinho(
-                item['venda_obj'],
-                item['produto_obj']
-            )
+            carrinho_atual = self.adicionar_ao_carrinho(item['venda_obj'],item['produto_obj'])
 
             if isinstance(carrinho_atual, dict) and "erro" in carrinho_atual:
                 return carrinho_atual
@@ -135,9 +129,9 @@ class VendaService:
 
         return self.response_api(response)
     
-    def cancelar_venda(self, venda_iniciada: VendaInicializada):
+    def cancelar_venda(self, venda_iniciada: VendaInicializada) -> dict:
         if not isinstance(venda_iniciada, VendaInicializada):
-            return {"erro": "Objeto inválido"}
+            return {"erro": "Objeto inválido. Esperado tipo Venda"}
 
         buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
 
@@ -151,7 +145,7 @@ class VendaService:
 
         return resultado_repository
 
-    def finalizar_venda(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada, valor_dinheiro=None):
+    def finalizar_venda(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada, valor_dinheiro=None) -> dict:
 
         if not isinstance(venda_finalizada, VendaFinalizada) or not isinstance(venda_iniciada, VendaInicializada):
             return {"erro": "Objeto inválido. Esperado tipo Venda"}
@@ -182,11 +176,11 @@ class VendaService:
         # Se a forma de pagamento não for dinheiro automaticamente será inserida no banco
         # Sendo débito ou crédito
         resultado_repository = self.venda_repository.finalizar_venda(
-            venda_finalizada,
-            buscar_venda['valor_total'],
-            troco,
-            horario_mock=datetime.now().strftime("%H:%M"),
-            data_mock=datetime.now().strftime("%d/%m/%Y")
+            venda=venda_finalizada,
+            valor_total=buscar_venda['valor_total'],
+            troco=troco,
+            horario=datetime.now().strftime("%H:%M"),
+            data=datetime.now().strftime("%d/%m/%Y")
         )
 
         comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
@@ -204,7 +198,7 @@ class VendaService:
         }
 
 
-    def gerar_qrcode(self):
+    def gerar_qrcode(self) -> dict:
         img = qrcode.make("Pagamento feito com sucesso")
 
         buffer = io.BytesIO()
@@ -214,7 +208,7 @@ class VendaService:
         
         return {"qrcode":img_base64}
 
-    def finalizar_venda_pix(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada):
+    def finalizar_venda_pix(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada) -> dict:
 
         buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
 
@@ -228,11 +222,11 @@ class VendaService:
             return {"erro": "Apenas pagamentos em PIX são permitidos"}
         
         resultado_repository = self.venda_repository.finalizar_venda(
-            venda_finalizada,
-            buscar_venda['valor_total'],
+            venda=venda_finalizada,
+            valor_total=buscar_venda['valor_total'],
             troco=0.0,
-            horario_mock=datetime.now().strftime("%H:%M"),
-            data_mock=datetime.now().strftime("%d/%m/%Y")
+            horario=datetime.now().strftime("%H:%M"),
+            data=datetime.now().strftime("%d/%m/%Y")
         )
 
         atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
