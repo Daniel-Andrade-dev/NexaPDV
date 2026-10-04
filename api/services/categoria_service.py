@@ -1,4 +1,5 @@
 from api.models.categoria.categoria import Categoria
+from api.models.produto.produto import Produto
 from api.repository.categoria_repository import CategoriaRepository
 from api.validator.validator import Validator
 from api.enums.status_categoria import StatusCategoria

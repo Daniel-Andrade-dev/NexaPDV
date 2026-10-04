@@ -1,7 +1,9 @@
 import sqlite3 as sql
 from api.database.connections import ConnectionDataBase
 from api.models.produto.produto import Produto
+from api.models.categoria.categoria import Categoria
 from api.models.venda.venda import VendaInicializada
+
 
 """
 CRUD CONTROLE DE ESTOQUE PARA O PDV
@@ -12,22 +14,28 @@ class ProdutoRepository:
     def connect_database(self):
         return ConnectionDataBase().connect_sql()
 
-    def inserir_produto(self, produto: Produto) -> dict:
+    def inserir_produto(self, categoria: Categoria, produto: Produto) -> dict:
         if not isinstance(produto, Produto):
             return {"erro": "Objeto inválido. Esperado tipo Produto."}
 
         try:
             with self.connect_database() as conn:
                 query = """
-                    INSERT INTO produtos
-                    (nome_produto, preco_unitario, estoque, categoria, status)
+                    INSERT INTO produtos (
+                        categoria_id,
+                        nome_produto,
+                        preco_unitario,
+                        estoque,
+                        status
+                    )
                     VALUES(?,?,?,?,?)
                 """
+
                 cur = conn.execute(query,(
+                    categoria.categoria_id,
                     produto.nome_produto,
                     produto.preco_unitario,
                     produto.estoque,
-                    produto.categoria,
                     produto.status
                 ))
 
@@ -35,10 +43,10 @@ class ProdutoRepository:
                 "sucesso": True,
                 "dados": {
                     "codigo": cur.lastrowid,
+                    "categoria_id": categoria.categoria_id,
                     "nome": produto.nome_produto,
                     "preco_unitario": produto.preco_unitario,
                     "estoque": produto.estoque,
-                    "categoria": produto.categoria,
                     "status": produto.status
                 },
                 "msg": f"Produto {produto.nome_produto} cadastrado com sucesso"
@@ -62,16 +70,18 @@ class ProdutoRepository:
             with self.connect_database() as conn:
                 query = """
                     SELECT
-                        codigo,
-                        nome_produto,
-                        preco_unitario,
-                        estoque,
-                        categoria,
-                        status
+                        p.codigo,
+                        c.nome AS categoria,
+                        p.nome_produto,
+                        p.preco_unitario,
+                        p.estoque,
+                        p.status
                     FROM
-                        produtos
+                        produtos p
+                    INNER JOIN
+                        categorias c ON p.categoria_id = c.categoria_id
                     WHERE
-                        codigo = ?
+                        p.codigo = ?
                 """
                 cur = conn.execute(query, (codigo,))
                 produto = cur.fetchone()
@@ -79,14 +89,14 @@ class ProdutoRepository:
                 if produto is not None:
                     return {
                         "codigo": produto["codigo"],
+                        "categoria": produto['categoria'],
                         "nome_produto": produto["nome_produto"],
                         "preco_unitario": produto["preco_unitario"],
                         "estoque": produto["estoque"],
-                        "categoria": produto["categoria"],
                         "status": produto["status"]
                     }
                 else:
-                    return {"erro": "Produto não encontrado"}
+                    return None
         except sql.Error as e:
             return {
                 "erro": f"Erro de banco de dados: {str(e)}"
@@ -167,15 +177,16 @@ class ProdutoRepository:
             with self.connect_database() as conn:
                 query = """
                     SELECT
-                        codigo,                      
-                        nome_produto,
-                        preco_unitario,
-                        estoque,
-                        categoria,
-                        status
+                        p.codigo,
+                        p.nome_produto,
+                        c.nome AS categoria,
+                        p.preco_unitario,
+                        p.estoque,
+                        p.status
                     FROM 
-                        produtos
-                    ORDER BY preco_unitario ASC
+                        produtos p
+                    INNER JOIN 
+                        categorias c ON p.categoria_id = c.categoria_id;
                 """
                 cur = conn.execute(query)
                 produtos = cur.fetchall()
@@ -191,7 +202,7 @@ class ProdutoRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
         
-    def atualizar_produto(self, produto: Produto) -> dict:
+    def atualizar_produto(self, categoria: Categoria, produto: Produto) -> dict:
         if not isinstance(produto, Produto):
             return {"erro": "Objeto inválido."}
 
@@ -204,18 +215,18 @@ class ProdutoRepository:
                         produtos
                     SET 
                         nome_produto = ?,
+                        categoria_id = ?,
                         preco_unitario = ?,
                         estoque = ?,
-                        categoria = ?,
                         status = ?
                     WHERE 
                         codigo = ?
                 """
                 conn.execute(query,(
                     produto.nome_produto,
+                    categoria.categoria_id,
                     produto.preco_unitario,
                     produto.estoque,
-                    produto.categoria,
                     produto.status,
                     produto.codigo
                 ))
@@ -224,16 +235,15 @@ class ProdutoRepository:
                     return {
                         "dados": {
                             "codigo": produto.codigo,
+                            "categoria_id": categoria.categoria_id,
                             "nome": produto.nome_produto,
                             "preco_unitario": produto.preco_unitario,
                             "estoque": produto.estoque,
-                            "categoria": produto.categoria,
                             "status": produto.status
                         }
                     }
                 else:
-                    return None
-                    
+                    return None  
         except sql.Error as e:
             return {
                 "sucesso": False,
@@ -255,16 +265,11 @@ class ProdutoRepository:
                 cur = conn.execute(query)
                 valor_total = cur.fetchone()
 
-                if valor_total != 0.0:
-                    return {
-                        "qtd_produtos": valor_total['produtos'],
-                        "valor_total": round(valor_total['valor_total_estoque'], 2)
-                    }
+                if valor_total['valor_total_estoque'] is None:
+                    return {"valor_total_estoque": 0}
                 else:
-                    return {
-                        "qtd_produtos": valor_total['produtos'],
-                        "valor_total": 0.0
-                    }
+                    return {"valor_total_estoque": valor_total['valor_total_estoque']}
+
         except sql.Error as e:
             return {
                 "sucesso": False,

@@ -11,12 +11,12 @@ class Tabelas:
         return """
             CREATE TABLE IF NOT EXISTS produtos (
                 codigo INTEGER PRIMARY KEY AUTOINCREMENT,
+                categoria_id INTEGER NOT NULL,
                 nome_produto TEXT UNIQUE NOT NULL,
                 preco_unitario NUMERIC(10,2) NOT NULL,
                 estoque INTEGER NOT NULL,
-                categoria TEXT,
                 status TEXT DEFAULT "ativo" NOT NULL,
-                FOREIGN KEY (categoria) REFERENCES categorias(nome_categoria)
+                FOREIGN KEY (categoria_id) REFERENCES categorias(categoria_id)
             )
         """
 

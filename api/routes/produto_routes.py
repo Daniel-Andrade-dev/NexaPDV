@@ -1,6 +1,7 @@
 from flask import jsonify, request, Blueprint
 from api.services.produto_service import ProdutoService
 from api.models.produto.produto import Produto
+from api.models.categoria.categoria import Categoria
 from api.services.categoria_service import CategoriaService
 
 produto_bp = Blueprint("produto", __name__)
@@ -15,21 +16,27 @@ def cadastrar_produto():
         if not payload:
             return jsonify({"erro": "Corpo da requisição inválido"}), 400
 
-        categoria_buscada = categoria_service.buscar_categoria_nome(payload['categoria'])
+        categoria_buscada = categoria_service.buscar_categoria_id(payload['categoria_id'])
 
         if categoria_buscada is None:
             return jsonify({"erro": "Categoria não encontrada"}), 404
 
         produto = Produto(
             codigo=None,
+            categoria_id=categoria_buscada['categoria_id'],
             nome_produto=payload['nome_produto'],
             preco_unitario=payload['preco_unitario'],
             estoque=payload['estoque'],
-            categoria=categoria_buscada['categoria'] if payload['categoria'] == "" else payload['categoria'],
             status=payload['status'] 
         )
 
-        cadastrado = produto_service.cadastrar_produto(produto=produto)
+        categoria = Categoria(
+            categoria_id=categoria_buscada['categoria_id'],
+            nome=categoria_buscada['nome'],
+            status=categoria_buscada['status']
+        )
+
+        cadastrado = produto_service.cadastrar_produto(categoria,produto)
 
         if "erro" in cadastrado:
             return jsonify(cadastrado), 400
@@ -59,8 +66,8 @@ def buscar_produto(codigo: int):
     try:
         produto = produto_service.buscar_produto(codigo)
 
-        if "erro" in produto:
-            return jsonify(produto), 404
+        if not produto:
+            return jsonify({"erro": "Produto não encontrado"}), 404
         return jsonify(produto), 200
     except Exception as e:
         return jsonify({
@@ -101,20 +108,28 @@ def atualizar_produto(codigo: int):
         payload = request.get_json()
 
         produto_buscado = produto_service.buscar_produto(codigo)
+        categoria_buscada = categoria_service.buscar_categoria_id(payload['categoria_id'])
 
-        if produto_buscado is None:
-            return jsonify({"erro": "Produto não encontrado para atualização."}), 404
+        if produto_buscado is None or categoria_buscada is None:
+            return jsonify({"erro": "Produto ou categoria não encontrado para atualização."}), 404
 
         produto = Produto(
-            produto_buscado['codigo'],
-            payload['nome_produto'],
-            payload['preco_unitario'],
-            payload['estoque'],
-            payload['categoria'],
-            payload['status']
+            codigo=produto_buscado['codigo'],
+            categoria_id=categoria_buscada['categoria_id'],
+            nome_produto=payload['nome_produto'],
+            preco_unitario=payload['preco_unitario'],
+            estoque=payload['estoque'],
+            status=payload['status']
         )
 
-        resultado_service = produto_service.atualizar_produto(produto)
+        categoria = Categoria(
+            categoria_id=categoria_buscada['categoria_id'],
+            nome=categoria_buscada['nome'],
+            status=categoria_buscada['status']    
+        )
+
+
+        resultado_service = produto_service.atualizar_produto(categoria, produto)
 
         if "erro" in resultado_service:
             return jsonify(resultado_service), 400

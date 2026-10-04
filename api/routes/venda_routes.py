@@ -37,10 +37,10 @@ def inicializar_venda():
 
             produto = Produto(
                 produto_buscado['codigo'],
+                produto_buscado['categoria'],
                 produto_buscado['nome_produto'],
                 produto_buscado['preco_unitario'],
                 produto_buscado['estoque'],
-                produto_buscado['categoria'],
                 produto_buscado['status']
             )
 

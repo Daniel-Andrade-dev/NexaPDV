@@ -1,15 +1,17 @@
 from api.repository.produto_repository import ProdutoRepository
 from api.models.produto.produto import Produto
+from api.models.categoria.categoria import Categoria
 from api.models.venda.venda import VendaInicializada
 from api.validator.validator import Validator
 from api.enums.status_produto import StatusProduto
+
 
 class ProdutoService:
 
     def __init__(self, produto_repository=None):
         self.produto_repository = produto_repository or ProdutoRepository()
 
-    def cadastrar_produto(self, produto: Produto) -> dict:
+    def cadastrar_produto(self, categoria: Categoria, produto: Produto) -> dict:
 
         if not isinstance(produto, Produto): 
             return {"erro": "Objeto inválido. Esperado tipo Produto."}
@@ -28,7 +30,7 @@ class ProdutoService:
         if produto.status not in [status.value for status in StatusProduto]:
             return {"erro": "Status inválido. Apenas (ATIVO OU INATIVO)"}
         
-        return self.produto_repository.inserir_produto(produto=produto)
+        return self.produto_repository.inserir_produto(categoria, produto)
 
     def produtos_cadastrados(self) -> dict | list[dict]:
         return self.produto_repository.listar_produtos()
@@ -36,7 +38,7 @@ class ProdutoService:
     def buscar_produto(self, codigo: int) -> dict:
         return self.produto_repository.buscar_produto(codigo)
 
-    def atualizar_produto(self, produto: Produto) -> dict:
+    def atualizar_produto(self, categoria: Categoria, produto: Produto) -> dict:
 
         if not isinstance(produto, Produto):
             return {"erro": "Objeto inválido. Esperado tipo Produto."}
@@ -50,12 +52,12 @@ class ProdutoService:
             return {"erro": "Há campos vazios que precisam ser preenchidos."}
         
         if not Validator.validar_negativos([produto.preco_unitario, produto.estoque]):
-            return {"erro": "Informe valores acima de 0 para preço e estoque."}
+            return {"erro": "Informe valores acima de 0."}
         
         if produto.status not in [status.value for status in StatusProduto]:
             return {"erro": "Status inválido. Apenas (ATIVO OU INATIVO)"}
         
-        return self.produto_repository.atualizar_produto(produto=produto)
+        return self.produto_repository.atualizar_produto(categoria, produto)
 
     def deletar_produto(self, produto: Produto) -> dict | bool:
         

@@ -89,7 +89,7 @@ class VendaService:
         return self.venda_repository.buscar_venda_inicializada(venda_id)
 
     def inicializar_venda(self, itens_vendas: list[dict]) -> dict | list:
-
+        
         carrinho_atual = self.carrinho
         baixa_estoque = None
         response = []
@@ -102,7 +102,6 @@ class VendaService:
                 return baixa_estoque
 
             carrinho_atual = self.adicionar_ao_carrinho(item['venda_obj'],item['produto_obj'])
-
             if isinstance(carrinho_atual, dict) and "erro" in carrinho_atual:
                 return carrinho_atual
 
@@ -153,7 +152,7 @@ class VendaService:
         buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
         buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada.venda_id)
 
-        if not buscar_venda and not buscar_itens_venda: 
+        if not buscar_venda or not buscar_itens_venda: 
             return {"erro": "Venda não encontrada"}
 
         if buscar_venda['status'] == StatusVenda.CONCLUIDA:
@@ -161,6 +160,9 @@ class VendaService:
 
         if buscar_venda['status'] == StatusVenda.CANCELADA:
             return {"erro": "Não e possível finalizar vendas canceladas"}
+
+        if venda_finalizada.forma_pagamento not in [forma.value for forma in FormaPagamentos]:
+            return {"erro": f"Forma de pagamento inválido"}
 
         troco = 0.0
         if venda_finalizada.forma_pagamento == FormaPagamentos.DINHEIRO:
@@ -210,7 +212,12 @@ class VendaService:
 
     def finalizar_venda_pix(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada) -> dict:
 
+        troco = 0.0
         buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
+        buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada.venda_id)
+
+        if not buscar_venda or not buscar_itens_venda: 
+            return {"erro": "Venda não encontrada"}
 
         if buscar_venda['status'] == StatusVenda.CONCLUIDA:
             return {"erro": "Venda já está concluída. Tente novamente"}
@@ -224,10 +231,12 @@ class VendaService:
         resultado_repository = self.venda_repository.finalizar_venda(
             venda=venda_finalizada,
             valor_total=buscar_venda['valor_total'],
-            troco=0.0,
+            troco=troco,
             horario=datetime.now().strftime("%H:%M"),
             data=datetime.now().strftime("%d/%m/%Y")
         )
+
+        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
 
         atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
 
@@ -237,6 +246,7 @@ class VendaService:
         return {
             "sucesso": True,
             "venda": resultado_repository,
+            "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
             "status_venda": atualizar_status
         }
     
