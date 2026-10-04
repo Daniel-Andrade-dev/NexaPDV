@@ -2,23 +2,31 @@
 
 API de um sistema de **Ponto de Venda (PDV)** desenvolvido com o objetivo de estudar e simular o funcionamento básico de um sistema de supermercado.
 
-## 🎯 Objetivo do projeto
+---
+
+# 🎯 Objetivo do projeto
 
 O **NexaPDV** foi desenvolvido como um projeto de estudo para compreender, na prática, como funciona o fluxo de uma venda em um sistema de supermercado.
 
-A ideia principal é simular desde o **cadastro dos produtos** até a **finalização e pagamento de uma venda**, permitindo estudar conceitos como:
+A ideia principal é simular desde o **cadastro de categorias e produtos** até a **finalização da venda**, passando pelo controle de estoque, gerenciamento dos itens da venda e simulação dos pagamentos.
+
+Entre os principais conceitos implementados estão:
 
 * Cadastro e organização de produtos;
 * Controle de estoque;
 * Criação e gerenciamento de categorias;
+* Vinculação de produtos às categorias através do ID;
 * Abertura de uma venda;
-* Adição de produtos ao carrinho;
+* Inserção dos itens da venda;
 * Cálculo do valor total da venda;
 * Baixa automática do estoque;
 * Finalização da venda;
 * Registro da forma de pagamento;
 * Cálculo de troco para pagamentos em dinheiro;
-* Pagamento via PIX;
+* Simulação de pagamentos em débito e crédito;
+* Simulação de pagamento via PIX;
+* Geração de QR Code;
+* Geração de comprovante em arquivo `.txt`;
 * Geração de relatórios relacionados aos produtos e estoque.
 
 > **Importante:** o NexaPDV é um projeto desenvolvido para fins de estudo e aprendizado, tendo como foco a compreensão da lógica e do fluxo de funcionamento de um sistema de PDV.
@@ -55,7 +63,7 @@ Atualmente, o sistema possui as seguintes funcionalidades:
 * Atualização de produtos;
 * Consulta de produtos;
 * Exclusão de produtos;
-* Vinculação de produtos a categorias;
+* Vinculação obrigatória do produto a uma categoria através do `categoria_id`;
 * Controle de estoque;
 * Definição de status do produto.
 
@@ -63,6 +71,7 @@ Atualmente, o sistema possui as seguintes funcionalidades:
 
 * Iniciar uma venda;
 * Adicionar produtos à venda;
+* Inserir os itens da venda;
 * Calcular o valor total da venda;
 * Baixar automaticamente os produtos do estoque;
 * Listar vendas abertas;
@@ -70,16 +79,41 @@ Atualmente, o sistema possui as seguintes funcionalidades:
 * Registrar a forma de pagamento;
 * Registrar o valor pago;
 * Calcular o troco em pagamentos em dinheiro;
-* Listar vendas finalizadas.
+* Listar vendas finalizadas;
+* Gerar comprovante da venda em formato `.txt`.
 
 ### 💳 Pagamentos
 
 * Simulação de pagamento em dinheiro;
+* Simulação de pagamento em débito;
+* Simulação de pagamento em crédito;
 * Simulação de pagamento via PIX;
 * Geração de QR Code para o fluxo simulado de pagamento via PIX;
-* Retorno do QR Code em formato Base64.
+* Retorno do QR Code em formato Base64;
+* Rota específica para geração do QR Code;
+* Registro das informações do pagamento.
 
-> **Observação:** a parte de pagamentos do NexaPDV é **apenas uma simulação**. O projeto não utiliza APIs ou gateways de pagamento prontos, como Mercado Pago, Stripe ou outros serviços externos. A lógica de pagamento é implementada diretamente na aplicação com fins de estudo.
+> **Observação:** os pagamentos do NexaPDV são **simulados**. O projeto não utiliza APIs ou gateways de pagamento prontos, como Mercado Pago, Stripe ou outros serviços externos. A lógica de pagamento é implementada diretamente na aplicação com fins de estudo.
+
+### 📄 Comprovante
+
+O NexaPDV possui uma funcionalidade de **geração de comprovante da venda em formato `.txt`**.
+
+O comprovante é gerado durante o processo de finalização da venda. A resposta da API informa o caminho do arquivo gerado.
+
+Exemplo:
+
+```json
+{
+    "msg_comprovante": {
+        "arquivo": "comprovantes/comprovante_1.txt",
+        "msg": "comprovante gerado com sucesso",
+        "sucesso": true
+    }
+}
+```
+
+Dessa forma, o sistema simula a geração de um comprovante simples após a conclusão da venda.
 
 ### 📊 Relatórios
 
@@ -87,18 +121,6 @@ Atualmente, o sistema possui as seguintes funcionalidades:
 * Consulta do valor total do estoque.
 
 ---
-
-# 🚧 Funcionalidades em desenvolvimento
-
-Algumas funcionalidades do projeto ainda estão em desenvolvimento:
-
-### Itens da venda
-
-O gerenciamento dos **itens individuais de uma venda** ainda está em desenvolvimento.
-
-> **OBS:** As funcionalidades podem sofrer alterações conforme o desenvolvimento e evolução do projeto.
-
-
 
 # 🗄️ Inicialização do banco de dados
 
@@ -109,8 +131,6 @@ Para iniciar o banco de dados, execute o seguinte comando na raiz do projeto:
 ```bash
 python api/database/connections.py
 ```
-
-> **OBS:** Ao executar o arquivo de inicialização do banco de dados, serão implementados automaticamente **50 produtos e 9 categorias** para fins de testes e demonstração do sistema.
 
 ---
 
@@ -164,7 +184,7 @@ Após iniciar a aplicação, a API estará disponível para receber as requisiç
 
 As categorias são utilizadas para **organizar e separar os produtos cadastrados no sistema**.
 
-Um produto pode ser associado a uma categoria, facilitando a organização dos produtos dentro do PDV.
+Os produtos não recebem mais uma categoria padrão automaticamente. Para cadastrar um produto, é necessário informar uma categoria existente através do seu **ID**.
 
 ### Exemplo de cadastro
 
@@ -193,33 +213,41 @@ Cada produto possui informações como:
 
 ### Exemplo de cadastro
 
+A categoria do produto é informada através do campo `categoria_id`:
+
 ```json
 {
-    "nome_produto": "Arroz 1kg",
-    "preco_unitario": 32.99,
-    "estoque": 999,
-    "categoria": "",
+    "nome_produto": "Arroz 5g",
+    "categoria_id": 1,
+    "preco_unitario": 36.76,
+    "estoque": 199,
     "status": "ativo"
 }
 ```
 
-### Categoria automática
+Nesse exemplo:
 
-É possível informar a categoria diretamente no corpo da requisição.
+* `nome_produto` define o nome do produto;
+* `categoria_id` informa o ID da categoria vinculada ao produto;
+* `preco_unitario` define o preço unitário;
+* `estoque` define a quantidade disponível;
+* `status` define o estado do produto.
 
-Caso o campo `categoria` seja enviado vazio:
+### 🔗 Categoria obrigatória
+
+O produto precisa possuir uma categoria vinculada.
+
+A categoria deve ser informada através do campo:
 
 ```json
-"categoria": ""
+"categoria_id": 1
 ```
 
-a API automaticamente vinculará o produto à categoria:
+O valor informado deve corresponder ao ID de uma categoria existente no banco de dados.
 
-```text
-DIVERSOS
-```
+Não existe mais a regra de atribuir automaticamente a categoria **DIVERSOS** quando nenhuma categoria é informada.
 
-Isso permite cadastrar um produto mesmo quando nenhuma categoria específica foi informada.
+Portanto, o cadastro do produto depende da existência de uma categoria válida para realizar a vinculação.
 
 ---
 
@@ -227,7 +255,7 @@ Isso permite cadastrar um produto mesmo quando nenhuma categoria específica foi
 
 O processo de venda começa através da criação de uma venda com os produtos desejados.
 
-Para iniciar uma venda, é necessário informar:
+Para iniciar uma venda, são informados:
 
 * Código do produto;
 * Quantidade que será vendida.
@@ -251,68 +279,93 @@ Para iniciar uma venda, é necessário informar:
 
 Nesse exemplo:
 
-* O produto `1` será vendido em uma quantidade de `2` unidades;
-* O produto `46` será vendido em uma quantidade de `4` unidades.
+* O produto `1` será adicionado à venda com quantidade `2`;
+* O produto `46` será adicionado à venda com quantidade `4`.
 
 ---
 
-## 📋 Resposta da API
+# 🧾 Itens da venda
 
-Após iniciar a venda, a API retorna informações sobre o carrinho, os valores, o estoque e a própria venda.
+Os **itens da venda agora são inseridos durante a inicialização da venda**.
 
-```json
-{
-    "carrinho_atual": [
-        {
-            "nome_produto": "Arroz 5kg",
-            "preco_unitario": 28.9,
-            "quantidade_venda": 2,
-            "valor_total_produto": 57.8
-        },
-        {
-            "nome_produto": "Prato de Cerâmica",
-            "preco_unitario": 14.9,
-            "quantidade_venda": 4,
-            "valor_total_produto": 59.6
-        }
-    ],
-    "data": {
-        "venda": {
-            "iniciada_em": "18/09/2026T22:39",
-            "status": "aberta",
-            "valor_total_venda": 117.4,
-            "venda_id": 2
-        }
-    },
-    "estoque": true,
-    "message": "Venda inicializada com sucesso.",
-    "success": true
-}
-```
+Cada item está relacionado a um produto e registra informações como:
 
-### O que significa `estoque: true`?
+* Código do produto;
+* Nome do produto;
+* Preço unitário;
+* Quantidade vendida;
+* Valor total do produto.
 
-O campo:
+Essas informações são utilizadas para compor o carrinho e calcular o valor total da venda.
 
-```json
-"estoque": true
-```
-
-indica que a operação de estoque foi realizada com sucesso.
-
-Ao iniciar uma venda, a API **automaticamente realiza a baixa da quantidade vendida no estoque**.
-
-Por exemplo:
+Exemplo:
 
 ```text
-Estoque antes da venda: 999
-
-Quantidade vendida: 2
-
-Estoque após a venda: 997
+Produto: Arroz 5g
+Preço unitário: R$ 36,76
+Quantidade: 10
+Valor total do produto: R$ 367,60
 ```
 
-Dessa forma, o estoque é atualizado de acordo com os produtos adicionados à venda.
+---
+
+# 📋 Resposta da API
+
+Após iniciar a venda, a API retorna os itens inseridos no carrinho e as informações da venda.
+
+Exemplo da estrutura atual:
+
+```json
+[
+    {
+        "carrinho": [
+            {
+                "codigo_produto": 1,
+                "nome_produto": "Arroz 5g",
+                "preco_unitario": 36.76,
+                "quantidade_venda": 10,
+                "valor_total_produto": 367.6
+            },
+            {
+                "codigo_produto": 1,
+                "nome_produto": "Arroz 5g",
+                "preco_unitario": 36.76,
+                "quantidade_venda": 10,
+                "valor_total_produto": 367.6
+            }
+        ],
+        "msg": "Venda iniciada com sucesso",
+        "sucesso": true,
+        "venda": {
+            "iniciada_em": "04/10/2026T20:36",
+            "status": "aberta",
+            "valor_total_venda": 735.2,
+            "venda_id": 1
+        }
+    }
+]
+```
+
+O retorno apresenta:
+
+* `carrinho` — itens adicionados à venda;
+* `codigo_produto` — código do produto;
+* `nome_produto` — nome do produto;
+* `preco_unitario` — preço de uma unidade;
+* `quantidade_venda` — quantidade adicionada à venda;
+* `valor_total_produto` — valor total daquele item;
+* `msg` — mensagem referente à operação;
+* `sucesso` — indica se a operação foi realizada com sucesso;
+* `venda` — informações gerais da venda;
+* `venda_id` — identificador da venda;
+* `status` — situação atual da venda;
+* `valor_total_venda` — valor total calculado para a venda.
+
+No exemplo, existem dois registros de item e, por isso, o valor total da venda é:
+
+```text
+R$ 367,60 + R$ 367,60 = R$ 735,20
+```
 
 ---
 
@@ -368,24 +421,66 @@ Troco: R$ 32,60
 
 ### 📋 Resposta da finalização em dinheiro
 
-Exemplo de resposta:
+Além de finalizar a venda, a operação também gera o comprovante.
+
+Exemplo da resposta atual:
 
 ```json
 {
-    "status_venda": true,
+    "msg_comprovante": {
+        "arquivo": "comprovantes/comprovante_1.txt",
+        "msg": "comprovante gerado com sucesso",
+        "sucesso": true
+    },
+    "status_venda_iniciada": {
+        "msg": "Status atualizado",
+        "sucesso": true
+    },
     "sucesso": true,
-    "troco": 32.6,
     "venda": {
-        "finalizada_em": "18/09/2026T22:43",
+        "finalizada_em": "04/10/2026T20:38",
         "pagamento": {
             "forma": "dinheiro",
-            "valor_pago": 150
+            "troco": 64.8,
+            "valor_pago": 800
         },
-        "status": "concluida",
-        "venda_id": 2
+        "status_venda_finalizada": "concluida",
+        "venda_id": 1
     }
 }
 ```
+
+A resposta informa três partes importantes:
+
+### `msg_comprovante`
+
+Indica que o comprovante foi gerado e informa o caminho do arquivo:
+
+```text
+comprovantes/comprovante_1.txt
+```
+
+### `status_venda_iniciada`
+
+Indica que o status da venda iniciada foi atualizado com sucesso.
+
+```json
+{
+    "msg": "Status atualizado",
+    "sucesso": true
+}
+```
+
+### `venda`
+
+Contém as informações da venda finalizada, incluindo:
+
+* Horário de finalização;
+* Forma de pagamento;
+* Valor pago;
+* Troco;
+* Status final;
+* ID da venda.
 
 Após a finalização, a venda passa de:
 
@@ -399,24 +494,27 @@ para:
 concluida
 ```
 
-A API também registra informações como:
+---
 
-* ID da venda;
-* Forma de pagamento;
-* Valor pago;
-* Horário de finalização;
-* Status da venda;
-* Troco, quando aplicável.
+# 💳 Pagamentos em débito e crédito
+
+O NexaPDV também possui suporte à **simulação de pagamentos em débito e crédito**.
+
+Essas formas de pagamento fazem parte da lógica de finalização da venda, assim como o pagamento em dinheiro e o PIX.
+
+Os pagamentos continuam sendo apenas **simulados**, não existindo integração com máquinas de cartão, adquirentes ou gateways externos.
 
 ---
 
-## 💳 Pagamento via PIX
+# 💠 Pagamento via PIX
 
-O pagamento via **PIX possui uma rota separada** da finalização convencional.
+O pagamento via **PIX possui rotas específicas** para separar a finalização da venda da geração do QR Code.
 
-Essa separação foi realizada para evitar que o QR Code seja incluído nas respostas das outras formas de pagamento, mantendo as respostas da API menores e evitando conflitos relacionados ao conteúdo do QR Code.
+Essa separação permite que a geração do QR Code seja realizada de forma independente da operação de finalização da venda.
 
-A rota utilizada é:
+## Finalização da venda via PIX
+
+A venda pode ser finalizada através da rota:
 
 ```http
 POST /finalizar_venda/pix/<venda_id>
@@ -430,44 +528,76 @@ POST /finalizar_venda/pix/<venda_id>
 }
 ```
 
-A rota específica do PIX realiza o fluxo simulado de finalização da venda e retorna o QR Code juntamente com as informações necessárias da operação.
+Essa rota realiza a lógica de finalização da venda utilizando a forma de pagamento PIX.
+
+---
+
+# 🔲 Geração do QR Code PIX
+
+A geração do QR Code possui uma rota própria:
+
+```http
+GET /qrcode/pix
+```
+
+Com a API executando localmente:
+
+```http
+GET http://127.0.0.1:5000/qrcode/pix
+```
+
+A rota foi separada da finalização da venda para manter a geração do QR Code como uma operação independente.
 
 ### QR Code em Base64
 
-O campo `qrcode` retornado pela API contém a imagem do QR Code representada em **Base64**.
+O projeto utiliza a biblioteca **QRCode** para gerar o QR Code.
 
-Exemplo:
+O conteúdo da imagem pode ser representado em **Base64**, permitindo que a imagem seja transportada através da API.
+
+Exemplo conceitual:
 
 ```json
 {
-    "qrcode": "iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2yk...",
-    "status_venda": true,
-    "sucesso": true,
-    "venda": {
-        "finalizada_em": "19/09/2026T18:55",
-        "pagamento": {
-            "forma": "pix",
-            "valor_pago": 117.4
-        },
-        "status": "concluida",
-        "venda_id": 3
-    }
+    "qrcode": "iVBORw0KGgoAAAANSUhEUgAA..."
 }
 ```
 
-O Base64 permite transportar os dados da imagem diretamente dentro da resposta JSON.
+O front-end poderá utilizar esse conteúdo para exibir visualmente o QR Code.
 
-No futuro, o **front-end** poderá utilizar esse conteúdo para converter e exibir o QR Code visualmente para o usuário.
+> **Importante:** o PIX implementado no NexaPDV é **simulado**. O projeto não realiza uma transação PIX real e não possui integração com gateways ou APIs externas de pagamento.
 
-> **OBS:** O QR Code em Base64 é retornado especificamente pelo endpoint de PIX. Dessa forma, as respostas das demais formas de pagamento não precisam carregar esse conteúdo, mantendo o retorno da API mais enxuto.
+---
 
-> **Importante:** o PIX implementado no NexaPDV também é **simulado**. O projeto não realiza uma transação PIX real e não possui integração com gateways ou APIs de pagamento externas.
+# 📄 Comprovante da venda
+
+O NexaPDV possui uma funcionalidade de **geração de comprovante da venda em formato `.txt`**.
+
+O comprovante é gerado durante a finalização da venda.
+
+O sistema informa na resposta da API o arquivo gerado:
+
+```text
+comprovantes/comprovante_1.txt
+```
+
+A resposta também informa:
+
+```json
+{
+    "msg": "comprovante gerado com sucesso",
+    "sucesso": true
+}
+```
+
+O comprovante possui finalidade de **simulação**, reproduzindo de forma simplificada as informações relacionadas à venda realizada.
+
+> **Importante:** esse arquivo não representa um documento fiscal oficial. Ele é utilizado no projeto para simular a geração de um comprovante de venda.
 
 ---
 
 # 📊 Relatórios
 
-O sistema também possui funcionalidades relacionadas a **relatórios de produtos e estoque**.
+O sistema possui funcionalidades relacionadas a **relatórios de produtos e estoque**.
 
 Uma das informações disponíveis é o **valor total do estoque**, permitindo visualizar o valor financeiro correspondente aos produtos atualmente armazenados.
 
@@ -475,11 +605,13 @@ Exemplo conceitual:
 
 ```text
 Relatório de Estoque
+
 ────────────────────────────
+
 Valor total do estoque: R$ 12.450,00
 ```
 
-Essas informações podem futuramente ser apresentadas de forma visual através do front-end.
+Essas informações poderão futuramente ser apresentadas de forma visual através do front-end.
 
 ---
 
@@ -494,13 +626,20 @@ De forma simplificada, o funcionamento do **NexaPDV** pode ser representado da s
          CADASTRAR PRODUTO
                 │
                 ▼
-          DEFINIR ESTOQUE
+       VINCULAR CATEGORIA
+          ATRAVÉS DO ID
                 │
                 ▼
-           INICIAR VENDA
+         DEFINIR ESTOQUE
+                │
+                ▼
+          INICIAR VENDA
                 │
                 ▼
         ADICIONAR PRODUTOS
+                │
+                ▼
+        INSERIR ITENS DA VENDA
                 │
                 ▼
         BAIXAR DO ESTOQUE
@@ -509,22 +648,35 @@ De forma simplificada, o funcionamento do **NexaPDV** pode ser representado da s
          CALCULAR TOTAL
                 │
                 ▼
-        ESCOLHER PAGAMENTO
+       ESCOLHER PAGAMENTO
                 │
-        ┌───────┴────────┐
-        ▼                ▼
-     DINHEIRO           PIX
-        │                │
-        ▼                ▼
-     TROCO          GERAR QR CODE
-        │             (SIMULADO)
-        │                │
-        └───────┬────────┘
+       ┌────────┼────────┐
+       ▼        ▼        ▼
+   DINHEIRO   DÉBITO   CRÉDITO
+       │
+       ▼
+     TROCO
+
+                │
+                ▼
+              PIX
+                │
+                ▼
+        GERAR QR CODE
+                │
+                ▼
+        PIX SIMULADO
+
+                │
                 ▼
          FINALIZAR VENDA
                 │
                 ▼
        REGISTRAR PAGAMENTO
+                │
+                ▼
+       GERAR COMPROVANTE
+             (.txt)
                 │
                 ▼
          VENDA CONCLUÍDA
@@ -542,9 +694,13 @@ A interface deverá permitir utilizar visualmente as funcionalidades já disponi
 * Gerenciamento de categorias;
 * Controle de estoque;
 * Criação e finalização de vendas;
+* Gerenciamento dos itens da venda;
 * Simulação de pagamento em dinheiro;
+* Simulação de pagamento em débito;
+* Simulação de pagamento em crédito;
 * Simulação de pagamento via PIX;
-* Exibição do QR Code;
+* Geração e exibição do QR Code;
+* Geração do comprovante;
 * Consulta de relatórios;
 * Visualização do valor total do estoque.
 
@@ -556,22 +712,40 @@ A ideia é manter o **backend responsável pela lógica e regras do sistema**, e
 
 O **NexaPDV** busca reproduzir, de forma simplificada, o fluxo básico encontrado em um sistema de supermercado.
 
-O projeto começa pelo **cadastro e organização dos produtos**, passa pelo **controle de estoque**, permite **iniciar uma venda** e termina com o **processamento simulado do pagamento e conclusão da venda**.
+O projeto começa pelo **cadastro de categorias e produtos**, passa pela **vinculação obrigatória da categoria através do ID** e pelo **controle de estoque**, permite **iniciar uma venda e inserir seus itens**, calcula o valor total e realiza a baixa dos produtos no estoque.
 
-Atualmente, o sistema também possui suporte ao **pagamento via PIX através de uma rota específica**, com retorno do QR Code em **Base64**, além de funcionalidades de **relatórios de produtos e estoque**.
+Após isso, a venda pode ser finalizada utilizando as formas de pagamento disponíveis no sistema, incluindo **dinheiro, débito, crédito e PIX**.
 
-A implementação de pagamentos tem **finalidade exclusivamente educacional**. O NexaPDV não utiliza gateways ou APIs externas de pagamento, como Mercado Pago, Stripe ou outros serviços semelhantes. Toda a lógica de pagamento foi desenvolvida dentro da própria aplicação para simular o comportamento de um sistema de PDV.
+Na finalização, o sistema registra as informações do pagamento, atualiza o status da venda para **concluída** e gera um **comprovante em formato `.txt`**.
 
-O banco de dados também possui uma carga inicial de dados para facilitar os testes, com **50 produtos e 9 categorias**.
+O projeto também possui uma rota específica para geração do **QR Code PIX**, mantendo essa operação separada da finalização da venda.
+
+A implementação dos pagamentos tem **finalidade exclusivamente educacional**. O NexaPDV não utiliza gateways ou APIs externas de pagamento, como Mercado Pago, Stripe ou outros serviços semelhantes. Toda a lógica foi desenvolvida dentro da própria aplicação para simular o comportamento de um sistema de PDV.
 
 O principal objetivo não é apenas criar um CRUD, mas compreender como diferentes partes de um sistema de PDV se relacionam durante uma operação de venda.
 
 ```text
-Produto → Estoque → Venda → Pagamento → Venda concluída
-                         │
-                         ├── Dinheiro → Troco
-                         │
-                         └── PIX → QR Code (Base64)
+Produto
+   ↓
+Categoria
+   ↓
+Estoque
+   ↓
+Venda
+   ↓
+Itens da venda
+   ↓
+Cálculo do total
+   ↓
+Pagamento
+   ├── Dinheiro → Troco
+   ├── Débito
+   ├── Crédito
+   └── PIX → QR Code
+            ↓
+      Venda concluída
+            ↓
+    Comprovante (.txt)
 ```
 
 O projeto continuará sendo evoluído, tendo como uma das próximas etapas a implementação de um **front-end integrado à API**.
