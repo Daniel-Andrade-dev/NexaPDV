@@ -114,6 +114,8 @@ class VendaService:
             valor_total
         )
 
+        self.venda_repository.inserir_itens_venda(response_carrinho, resultado_repository['venda_id'])
+
         if isinstance(resultado_repository, dict) and "erro" in resultado_repository:
             return resultado_repository
 

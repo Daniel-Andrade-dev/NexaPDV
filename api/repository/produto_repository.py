@@ -268,7 +268,11 @@ class ProdutoRepository:
                 if valor_total['valor_total_estoque'] is None:
                     return {"valor_total_estoque": 0}
                 else:
-                    return {"valor_total_estoque": valor_total['valor_total_estoque']}
+                    return {
+                        "produtos": valor_total['produtos'],
+                        "valor_total_estoque": f"{valor_total['valor_total_estoque']:.2f}"
+                    }
+                
 
         except sql.Error as e:
             return {

@@ -32,29 +32,6 @@ class VendaRepository:
 
                     venda_id = cur.lastrowid
 
-                    dados_itens = [
-                        (
-                            venda_id,
-                            item["codigo_produto"],
-                            item["quantidade_venda"],
-                            item["preco_unitario"],
-                            item['valor_total_produto']
-                        )
-                        for item in items
-                    ]
-
-                    query_itens_venda = """
-                        INSERT INTO itens_venda_inicializada (
-                            venda_id,
-                            codigo_produto,
-                            venda_quantidade,
-                            preco_unitario,
-                            valor_total_produto
-                        ) VALUES(?,?,?,?,?)
-                    """
-
-                    conn.executemany(query_itens_venda, dados_itens)
-
                     return {    
                         "venda_id": venda_id,
                         "iniciada_em": f"{item['data_inicializada']}T{item['horario_inicializada']}",
@@ -65,6 +42,31 @@ class VendaRepository:
             return {
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
+
+    def inserir_itens_venda(self, itens: list[dict], venda_id) -> None:
+
+        with self.connect_database() as conn:
+            query_itens_venda = """
+                INSERT INTO itens_venda_inicializada (
+                    venda_id,
+                    codigo_produto,
+                    venda_quantidade,
+                    preco_unitario,
+                    valor_total_produto
+                ) VALUES(?,?,?,?,?)
+            """
+            dados_itens = [
+                (
+                    venda_id,
+                    item['codigo_produto'],
+                    item['quantidade_venda'],
+                    item['preco_unitario'],
+                    item['valor_total_produto']
+                )
+                for item in itens
+            ]
+
+            conn.executemany(query_itens_venda, dados_itens)
 
         
     def finalizar_venda(self, venda: VendaFinalizada, valor_total: float, troco: float, horario, data):
