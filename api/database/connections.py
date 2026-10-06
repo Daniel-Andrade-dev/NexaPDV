@@ -44,6 +44,18 @@ class Tabelas:
         """
 
     @staticmethod
+    def tabela_pagamentos_caixa():
+        return """
+            CREATE TABLE IF NOT EXISTS pagamentos_caixa (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                caixa_id INTEGER NOT NULL,
+                forma_pagamento TEXT NOT NULL,
+                valor_pago NUMERIC(10,2) NOT NULL,
+                FOREIGN KEY (caixa_id) REFERENCES caixas(caixa_id)
+            )
+        """
+    
+    @staticmethod
     def tabela_total_caixa():
         return """
             CREATE TABLE IF NOT EXISTS total_caixa (
@@ -118,8 +130,10 @@ class ConnectionDataBase:
             "tabela_categoria": Tabelas.tabela_categoria(),
             "tabela_vendas_iniciada": Tabelas.tabela_vendas_inicializadas(),
             "tabela_vendas_finalizadas": Tabelas.tabela_vendas_finalizadas(),
+            "tabela_itens_venda": Tabelas.tabela_itens_venda_inicializada(),
             "tabela_caixas": Tabelas.tabela_caixa(),
-            "tabela_total_caixass": Tabelas.tabela_total_caixa()
+            "tabela_total_caixass": Tabelas.tabela_total_caixa(),
+            "tabela_pagamentos_caixa": Tabelas.tabela_pagamentos_caixa()
         }
         try:
             with self.connect_sql() as conn:

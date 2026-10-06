@@ -1,5 +1,5 @@
 from api.database.connections import ConnectionDataBase
-from api.models.caixa.caixa import Caixa
+from api.models.caixa.caixa import Caixa, TotalCaixa, PagamentosCaixa
 import sqlite3 as sql
 
 
@@ -62,6 +62,53 @@ class CaixaRepository:
                 "dados": None,
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
+
+    def inserir_pagamentos_caixa(self, caixa: Caixa, pagamento_caixa: PagamentosCaixa):
+        try:
+            if not isinstance(caixa, Caixa) or not isinstance(pagamento_caixa, PagamentosCaixa):
+                return {
+                    "sucesso": False,
+                    "dados": None,
+                    "msg": "Objeto inválido. Esperado tipo Caixa"
+                }
+
+            with self.connect_database() as conn:
+                query = """
+                    INSERT INTO pagamentos_caixa (
+                        caixa_id,
+                        forma_pagamento,
+                        valor_pago
+                    )VALUES(?,?,?)
+                """
+
+                cur = conn.execute(query, (
+                    caixa.caixa_id,
+                    pagamento_caixa.forma_pagamento,
+                    pagamento_caixa.valor_pago
+                ))
+
+                pagamento_caixa_id = cur.lastrowid
+
+                return {
+                    "sucesso": True,
+                    "dados": {
+                        "pagamento_caixa_id": pagamento_caixa_id,
+                        "caixa_id": caixa.caixa_id,
+                        "forma_pagamento": pagamento_caixa.forma_pagamento,
+                        "valor_pago": pagamento_caixa.valor_pago
+                    }
+                }
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+    # Em desenvolvimento é estudos
+    def fechamento_caixa(self):
+        pass 
+
 
     def cadastrar_caixa(self, caixa: Caixa) -> dict:
         try:

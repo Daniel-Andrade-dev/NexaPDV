@@ -1,4 +1,4 @@
-from api.models.caixa.caixa import Caixa
+from api.models.caixa.caixa import Caixa, PagamentosCaixa
 from api.repository.caixa_repository import CaixaRepository
 from api.enums.status_caixa import StatusCaixa
 
@@ -20,6 +20,9 @@ class CaixaService:
             return {"erro": f"Caixa {caixa.caixa_id} já está aberto. Tente novamente"}
         
         return self.caixa_repository.abertura_caixa(caixa)
+
+    def inserir_pagamentos_caixa(self, caixa: Caixa, pagamentos_caixa: PagamentosCaixa):
+        return self.caixa_repository.inserir_pagamentos_caixa(caixa, pagamentos_caixa)
 
     def buscar_caixa_id(self, caixa_id: int) -> dict | None:
         return self.caixa_repository.buscar_caixa(caixa_id)

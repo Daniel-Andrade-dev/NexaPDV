@@ -1,12 +1,15 @@
 from api.models.venda.venda import VendaFinalizada, VendaInicializada
 from api.models.produto.produto import Produto
+from api.models.caixa.caixa import Caixa, PagamentosCaixa
 from api.enums.forma_pagamento import FormaPagamentos
 from api.enums.status_produto import StatusProduto
 from api.enums.status_venda import StatusVenda
+from api.enums.status_caixa import StatusCaixa
 from api.repository.venda_repository import VendaRepository
 from api.services.produto_service import ProdutoService
 from api.validator.validator import Validator
 from api.services.classes.comprovante import Comprovante
+from api.services.caixa_service import CaixaService
 from datetime import datetime
 import qrcode
 import base64
@@ -17,6 +20,7 @@ class VendaService:
     def __init__(self, venda_repository=None):
         self.venda_repository = venda_repository or VendaRepository()
         self.produto_service = ProdutoService()
+        self.caixa_service = CaixaService()
         self.comprovante = Comprovante()
         self.carrinho = []
 
@@ -88,12 +92,20 @@ class VendaService:
     def buscar_venda_iniciada(self, venda_id) -> dict:
         return self.venda_repository.buscar_venda_inicializada(venda_id)
 
-    def inicializar_venda(self, itens_vendas: list[dict]) -> dict | list:
+    def inicializar_venda(self, itens_vendas: list[dict], caixa: Caixa) -> dict | list:
         
         carrinho_atual = self.carrinho
         baixa_estoque = None
         response = []
 
+        resultado_caixa = self.caixa_service.buscar_caixa_id(caixa.caixa_id)
+
+        if resultado_caixa is None:
+            return {"erro": f"Caixa {caixa.caixa_id} não encontrado"}
+
+        if resultado_caixa['status'] != StatusCaixa.ABERTO:
+            return {"erro": f"Caixa {caixa.caixa_id} está fechado, faça a abertura para realizar as vendas"}
+        
         for item in itens_vendas:
 
             baixa_estoque = self.produto_service.baixa_estoque(item['produto_obj'],item['venda_obj'])
@@ -146,14 +158,28 @@ class VendaService:
 
         return resultado_repository
 
-    def finalizar_venda(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada, valor_dinheiro=None) -> dict:
+    def finalizar_venda(
+            self,
+            caixa: Caixa,
+            pagamentos_caixa: PagamentosCaixa, 
+            venda_finalizada: VendaFinalizada, 
+            venda_iniciada: VendaInicializada, 
+            valor_dinheiro=None
+        ) -> dict:
 
         if not isinstance(venda_finalizada, VendaFinalizada) or not isinstance(venda_iniciada, VendaInicializada):
             return {"erro": "Objeto inválido. Esperado tipo Venda"}
 
         buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
         buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada.venda_id)
+        buscar_caixa = self.caixa_service.buscar_caixa_id(caixa.caixa_id)
 
+        if not buscar_caixa:
+            return {"erro": "Caixa não encontrado"}
+
+        if buscar_caixa['status'] != StatusCaixa.ABERTO:
+            return {"erro": f"Caixa {caixa.caixa_id} está fechado, faça abertura para finalizar a venda"}
+        
         if not buscar_venda or not buscar_itens_venda: 
             return {"erro": "Venda não encontrada"}
 
@@ -186,7 +212,7 @@ class VendaService:
             horario=datetime.now().strftime("%H:%M"),
             data=datetime.now().strftime("%d/%m/%Y")
         )
-
+        
         comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
         
         atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
@@ -194,11 +220,14 @@ class VendaService:
         if isinstance(atualizar_status, dict) and "erro" in atualizar_status:
             return atualizar_status
         
+        resultado_pagamento_caixa = self.caixa_service.inserir_pagamentos_caixa(caixa, pagamentos_caixa)
+
         return {
             "sucesso": True,
             "venda": resultado_repository,
             "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
-            "status_venda_iniciada": atualizar_status
+            "status_venda_iniciada": atualizar_status,
+            "resultado_pagamento_caixa": resultado_pagamento_caixa
         }
 
 

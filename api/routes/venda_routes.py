@@ -1,8 +1,10 @@
 from flask import jsonify, request, Blueprint
 from api.models.venda.venda import VendaInicializada, VendaFinalizada
 from api.models.produto.produto import Produto
+from api.models.caixa.caixa import Caixa, PagamentosCaixa
 from api.services.venda_service import VendaService
 from api.services.produto_service import ProdutoService
+from api.services.caixa_service import CaixaService
 from api.enums.status_venda import StatusVenda
 from datetime import datetime
 
@@ -10,15 +12,21 @@ from datetime import datetime
 venda_bp = Blueprint("venda", __name__)
 venda_service = VendaService()
 produto_service = ProdutoService()
+caixa_service = CaixaService()
 
-@venda_bp.route("/iniciar_venda", methods=["POST"])
-def inicializar_venda():
+@venda_bp.route("/iniciar_venda/<int:caixa_id>", methods=["POST"])
+def inicializar_venda(caixa_id: int):
     try:
         payload = request.get_json()
 
         if not payload or not payload['itens']:
             return jsonify({"erro": "Corpo da requisição inválida"}), 400
 
+        resultado_caixa = caixa_service.buscar_caixa_id(caixa_id)
+
+        if resultado_caixa is None:
+            return jsonify({"erro": f"Caixa {caixa_id} não encontrado"}), 404
+        
         itens_vendas = []
 
         for item in payload['itens']:
@@ -49,7 +57,15 @@ def inicializar_venda():
                 "produto_obj": produto
             })
 
-        resultado_service = venda_service.inicializar_venda(itens_vendas)
+        caixa = Caixa(
+            caixa_id=resultado_caixa['caixa_id'],
+            valor_inicial=resultado_caixa['valor_inicial'],
+            horario_aberto=resultado_caixa['horario_aberto'],
+            data_aberto=resultado_caixa['data_aberto'],
+            status=resultado_caixa['status']
+        )
+        
+        resultado_service = venda_service.inicializar_venda(itens_vendas, caixa)
 
         if "erro" in resultado_service:
             return jsonify(resultado_service), 400
@@ -69,6 +85,7 @@ def finalizar_venda(venda_id: int):
             return jsonify({"erro": "Corpo da requisição inválida"}), 400
 
         busca_venda_iniciada = venda_service.buscar_venda_iniciada(venda_id)
+        busca_caixa = caixa_service.buscar_caixa_id(payload['caixa_id'])
 
         if not busca_venda_iniciada:
             return jsonify({"erro": "Venda não encontrada"}), 404
@@ -89,7 +106,28 @@ def finalizar_venda(venda_id: int):
             status=busca_venda_iniciada['status']
         )
 
-        resultado_service = venda_service.finalizar_venda(venda_finalizada, venda_iniciada, payload['valor_dinheiro'])
+        caixa = Caixa(
+            caixa_id=busca_caixa['caixa_id'],
+            valor_inicial=busca_caixa['valor_inicial'],
+            horario_aberto=busca_caixa['horario_aberto'],
+            data_aberto=busca_caixa['data_aberto'],
+            status=busca_caixa['status']
+        )
+
+        pagamentos_caixa = PagamentosCaixa(
+            id=None,
+            caixa_id=busca_caixa['caixa_id'],
+            forma_pagamento=payload['forma_pagamento'],
+            valor_pago=payload['valor_dinheiro'] if payload['forma_pagamento'] == 'dinheiro' else busca_venda_iniciada['valor_total'],
+        )
+        
+        resultado_service = venda_service.finalizar_venda(
+            caixa,
+            pagamentos_caixa,
+            venda_finalizada,
+            venda_iniciada,
+            payload['valor_dinheiro']
+        )
 
         if "erro" in resultado_service:
             return jsonify(resultado_service), 400
