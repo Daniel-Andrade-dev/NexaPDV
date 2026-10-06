@@ -30,6 +30,34 @@ class Tabelas:
                 status TEXT DEFAULT "ativo" NOT NULL
             )
         """
+
+    @staticmethod
+    def tabela_caixa():
+        return """
+            CREATE TABLE IF NOT EXISTS caixas (
+                caixa_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                valor_inicial NUMERIC(10,2) DEFAULT 0.0,
+                data_aberto DATE,
+                horario_aberto TEXT,
+                status TEXT DEFAULT "fechado"
+            )
+        """
+
+    @staticmethod
+    def tabela_total_caixa():
+        return """
+            CREATE TABLE IF NOT EXISTS total_caixa (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                caixa_id INTEGER NOT NULL,
+                valor_total_venda NUMERIC(10,2) NOT NULL,
+                valor_esperado NUMERIC(10,2) NOT NULL,
+                valor_contado NUMERIC(10,2) NOT NULL,
+                diferenca NUMERIC(10,2) NOT NULL,
+                data_fechamento DATE NOT NULL,
+                horario_fechamento TEXT NOT NULL,
+                FOREIGN KEY (caixa_id) REFERENCES caixas(caixa_id)
+            )
+        """
     
     @staticmethod
     def tabela_vendas_inicializadas():
@@ -74,8 +102,6 @@ class Tabelas:
         """
 
 
-
-
 class ConnectionDataBase:
 
     def connect_sql(self):
@@ -87,13 +113,18 @@ class ConnectionDataBase:
             raise ValueError(f"Ocorreu um erro para realizar a conexão com o banco de dados >> {e}")
 
     def inicializar_tabelas(self):
+        tabelas = {
+            "tabela_produto": Tabelas.tabela_produtos(),
+            "tabela_categoria": Tabelas.tabela_categoria(),
+            "tabela_vendas_iniciada": Tabelas.tabela_vendas_inicializadas(),
+            "tabela_vendas_finalizadas": Tabelas.tabela_vendas_finalizadas(),
+            "tabela_caixas": Tabelas.tabela_caixa(),
+            "tabela_total_caixass": Tabelas.tabela_total_caixa()
+        }
         try:
             with self.connect_sql() as conn:
-                conn.execute(Tabelas.tabela_produtos())
-                conn.execute(Tabelas.tabela_vendas_inicializadas())
-                conn.execute(Tabelas.tabela_vendas_finalizadas())
-                conn.execute(Tabelas.tabela_categoria())
-                conn.execute(Tabelas.tabela_itens_venda_inicializada())
+                for tabela in tabelas.values():
+                    conn.execute(tabela)
             print("Tabelas inicializadas com sucesso !!!")
         except sql.Error as e:
             raise ValueError(f"Ocorreu um erro para inicializar as tabelas do banco >> {e}")
