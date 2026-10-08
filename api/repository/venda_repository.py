@@ -195,7 +195,35 @@ class VendaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
+    def buscar_vendas_finalizadas(self, venda_id: int):
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT 
+                        id_venda, 
+                        forma_pagamento,
+                        valor_total,
+                        valor_pago,
+                        status,
+                        horario_finalizada,
+                        data_finalizada
+                    FROM
+                        vendas_finalizadas
+                    WHERE 
+                        id_venda = ?
+                """
 
+                cur = conn.execute(query, (venda_id,))
+                venda = cur.fetchone()
+
+                return dict(venda) if venda is not None else None
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+        
     # A função e usada para exibir os produtos comprados no comprovante
     def buscar_itens_venda(self, venda_id: int) -> dict | list[dict]:
         try:

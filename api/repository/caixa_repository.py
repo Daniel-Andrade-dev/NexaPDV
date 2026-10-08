@@ -1,10 +1,15 @@
 from api.database.connections import ConnectionDataBase
 from api.models.caixa.caixa import Caixa, TotalCaixa, PagamentosCaixa
+from api.models.venda.venda import VendaFinalizada
+from api.repository.venda_repository import VendaRepository
 import sqlite3 as sql
 
 
 
 class CaixaRepository:
+
+    def __init__(self):
+        self.venda_repository = VendaRepository()
 
     def connect_database(self):
         return ConnectionDataBase().connect_sql()
@@ -36,7 +41,7 @@ class CaixaRepository:
                         caixa_id = ?
                 """
 
-                cur = conn.execute(query, (
+                conn.execute(query, (
                     caixa.valor_inicial,
                     caixa.horario_aberto,
                     caixa.data_aberto,
@@ -63,39 +68,46 @@ class CaixaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
-    def inserir_pagamentos_caixa(self, caixa: Caixa, pagamento_caixa: PagamentosCaixa):
+    def inserir_pagamentos_caixa(
+            self, 
+            caixa: Caixa,
+            pagamentos_caixa: PagamentosCaixa,
+            troco: int
+        ) -> dict:
         try:
-            if not isinstance(caixa, Caixa) or not isinstance(pagamento_caixa, PagamentosCaixa):
+            if not isinstance(caixa, Caixa) or not isinstance(pagamentos_caixa, PagamentosCaixa):
                 return {
                     "sucesso": False,
                     "dados": None,
-                    "msg": "Objeto inválido. Esperado tipo Caixa"
+                    "msg": "Objeto inválido. Esperado tipo Caixa ou PagamentosCaixa"
                 }
-
+            
             with self.connect_database() as conn:
                 query = """
                     INSERT INTO pagamentos_caixa (
                         caixa_id,
                         forma_pagamento,
-                        valor_pago
-                    )VALUES(?,?,?)
+                        valor_total_venda,
+                        valor_pago,
+                        troco
+                    )VALUES(?,?,?,?,?)
                 """
 
                 cur = conn.execute(query, (
                     caixa.caixa_id,
-                    pagamento_caixa.forma_pagamento,
-                    pagamento_caixa.valor_pago
+                    pagamentos_caixa.forma_pagamento,
+                    pagamentos_caixa.valor_total_venda,
+                    pagamentos_caixa.valor_pago,
+                    troco
                 ))
 
-                pagamento_caixa_id = cur.lastrowid
+                pagamento_id = cur.lastrowid
 
                 return {
                     "sucesso": True,
+                    "msg": f"Pagamento registrado no caixa {caixa.caixa_id}",
                     "dados": {
-                        "pagamento_caixa_id": pagamento_caixa_id,
-                        "caixa_id": caixa.caixa_id,
-                        "forma_pagamento": pagamento_caixa.forma_pagamento,
-                        "valor_pago": pagamento_caixa.valor_pago
+                        "pagamento_id": pagamento_id,
                     }
                 }
         except sql.Error as e:
@@ -105,9 +117,130 @@ class CaixaRepository:
                 "erro": f"Erro de banco de dados: {str(e)}"
             }
 
+    def listar_pagamentos_caixa(self) -> dict:
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT
+                        pagamento_id,
+                        caixa_id,
+                        forma_pagamento,
+                        valor_total_venda AS valor_total,
+                        valor_pago,
+                        troco
+                    FROM
+                        pagamentos_caixa
+                """
+
+                cur = conn.execute(query)
+                pagamentos = cur.fetchall()
+
+                return {
+                    "sucesso": True,
+                    "dados": [dict(pagamento) for pagamento in pagamentos]
+                }                
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+    
     # Em desenvolvimento é estudos
-    def fechamento_caixa(self):
-        pass 
+    def fechamento_caixa(self, total_caixa: TotalCaixa, caixa: Caixa):
+        try:
+            if not isinstance(total_caixa, TotalCaixa) or not isinstance(caixa, Caixa):
+                return {
+                    "sucesso": False,
+                    "dados": None,
+                    "msg": "Objeto inválido. Esperado tipo Caixa ou TotalCaixa"
+                }
+
+            with self.connect_database() as conn:
+                query = """
+                    INSERT INTO total_caixa (
+                        caixa_id,
+                        valor_total_venda,
+                        valor_esperado,
+                        valor_contado,
+                        diferenca,
+                        data_fechamento,
+                        horario_fechamento
+                    ) VALUES(?,?,?,?,?,?,?)
+                """
+
+                cur = conn.execute(query, (
+                    caixa.caixa_id,
+                    total_caixa.valor_total_venda,
+                    total_caixa.valor_esperado,
+                    total_caixa.valor_contado,
+                    total_caixa.diferenca,
+                    total_caixa.data_fechamento,
+                    total_caixa.horario_fechamento
+                ))
+
+                fechamento_id = cur.lastrowid
+
+                return {
+                    "sucesso": True,
+                    "msg": f"Fechamento do caixa {caixa.caixa_id} realizado com sucesso",
+                    "dados": {
+                        "fechamento_id": fechamento_id,
+                        "valor_total_venda": total_caixa.valor_total_venda,
+                        "valor_esperado": total_caixa.valor_esperado,
+                        "valor_contado": total_caixa.valor_contado,
+                        "diferenca": total_caixa.diferenca,
+                        "data_fechamento": total_caixa.data_fechamento,
+                        "horario_fechamento": total_caixa.horario_fechamento
+                    }
+                }
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+        
+
+    def realizar_sangria_caixa(self, valor_retirado, caixa: Caixa) -> dict:
+        try:
+            if not isinstance(caixa, Caixa):
+                return {
+                    "sucesso": False,
+                    "dados": None,
+                    "msg": "Objeto inválido. Esperado tipo Caixa"
+                }
+            
+            resultado_busca = self.buscar_caixa(caixa.caixa_id)
+            sangria = resultado_busca['valor_inicial'] - valor_retirado
+
+            with self.connect_database() as conn:
+                query = """
+                    UPDATE
+                        caixas
+                    SET
+                        valor_inicial = ?
+                    WHERE
+                        caixa_id = ?
+                """
+
+                conn.execute(query, (sangria, resultado_busca['caixa_id']))
+
+                return {
+                    "sucesso": True,
+                    "msg": "Sangria realizada com sucesso",
+                    "dados": {
+                        "caixa_id": resultado_busca['caixa_id'],
+                        "valor_retirado": valor_retirado,
+                    }
+                }
+
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
 
 
     def cadastrar_caixa(self, caixa: Caixa) -> dict:
@@ -208,7 +341,39 @@ class CaixaRepository:
 
                 cur = conn.execute(query)
                 caixas_abertos = cur.fetchall()
-                return [dict(caixas) for caixas in caixas_abertos]
+                return {
+                    "sucesso": True,
+                    "dados": [dict(caixa) for caixa in caixas_abertos]
+                }
+        except sql.Error as e:
+            return {
+                "sucesso": False,
+                "dados": None,
+                "erro": f"Erro de banco de dados: {str(e)}"
+            }
+
+    def listar_caixas_fechados(self) -> list[dict]:
+        try:
+            with self.connect_database() as conn:
+                query = """
+                    SELECT 
+                        caixa_id,
+                        valor_inicial,
+                        horario_aberto,
+                        data_aberto,
+                        status
+                    FROM
+                        caixas
+                    WHERE
+                        status = 'fechado'
+                """
+
+                cur = conn.execute(query)
+                caixas_abertos = cur.fetchall()
+                return {
+                    "sucesso": True,
+                    "dados": [dict(caixa) for caixa in caixas_abertos]
+                }
         except sql.Error as e:
             return {
                 "sucesso": False,

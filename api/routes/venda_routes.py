@@ -90,6 +90,9 @@ def finalizar_venda(venda_id: int):
         if not busca_venda_iniciada:
             return jsonify({"erro": "Venda não encontrada"}), 404
 
+        if not busca_caixa:
+            return jsonify({"erro": "Caixa não encontrado"}), 404
+
         venda_finalizada = VendaFinalizada(
             id_venda=None,
             forma_pagamento=payload['forma_pagamento'],
@@ -114,16 +117,8 @@ def finalizar_venda(venda_id: int):
             status=busca_caixa['status']
         )
 
-        pagamentos_caixa = PagamentosCaixa(
-            id=None,
-            caixa_id=busca_caixa['caixa_id'],
-            forma_pagamento=payload['forma_pagamento'],
-            valor_pago=payload['valor_dinheiro'] if payload['forma_pagamento'] == 'dinheiro' else busca_venda_iniciada['valor_total'],
-        )
-        
         resultado_service = venda_service.finalizar_venda(
             caixa,
-            pagamentos_caixa,
             venda_finalizada,
             venda_iniciada,
             payload['valor_dinheiro']

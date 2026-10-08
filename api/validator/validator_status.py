@@ -1,0 +1,6 @@
+
+
+class ValidatorStatus:
+    """
+    Em desenvolvimento
+    """

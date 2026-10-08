@@ -73,6 +73,17 @@ def abertura_de_caixa(caixa_id: int):
             "msg": "Ocorreu um erro no servidor",
             "erro": str(e)
         }), 500  
+    
+@caixa_bp.route("/caixas/pagamentos", methods=['GET'])
+def listar_pagamento_caixa():
+    try:
+        return jsonify(caixa_service.listar_pagamentos_caixa()), 200
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500  
+
 
 @caixa_bp.route("/caixas", methods=['GET'])
 def listar_caixas_abertos():
@@ -83,3 +94,45 @@ def listar_caixas_abertos():
             "msg": "Ocorreu um erro no servidor",
             "erro": str(e)
         }), 500  
+    
+@caixa_bp.route("/caixas/fechados", methods=['GET'])
+def listar_caixas_fechados():
+    try:
+        return jsonify(caixa_service.listar_caixas_fechados()), 200
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500 
+
+    
+@caixa_bp.route("/caixas/sangria/<int:caixa_id>", methods=['PUT'])
+def realizar_sangria_caixa(caixa_id: int):
+    try:
+        payload = request.get_json()
+
+        caixa_buscado = caixa_service.buscar_caixa_id(caixa_id)
+
+        if caixa_buscado is None:
+            return jsonify({"erro": "Caixa não encontrado"}), 404
+
+        caixa = Caixa(
+            caixa_id=caixa_buscado['caixa_id'],
+            valor_inicial=caixa_buscado['valor_inicial'],
+            horario_aberto=caixa_buscado['horario_aberto'],
+            data_aberto=caixa_buscado['data_aberto'],
+            status=caixa_buscado['status']
+        )
+
+        resultado_service = caixa_service.sangria_caixa(payload['valor_retirado'], caixa)
+
+        if "erro" in resultado_service:
+            return jsonify(resultado_service), 400
+        return jsonify(resultado_service)
+    except Exception as e:
+        return jsonify({
+            "msg": "Ocorreu um erro no servidor",
+            "erro": str(e)
+        }), 500   
+
+    

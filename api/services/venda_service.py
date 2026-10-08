@@ -89,8 +89,11 @@ class VendaService:
 
         return round(valor_dinheiro - valor_total, 2)
 
-    def buscar_venda_iniciada(self, venda_id) -> dict:
+    def buscar_venda_iniciada(self, venda_id) -> dict | None:
         return self.venda_repository.buscar_venda_inicializada(venda_id)
+
+    def buscar_venda_finalizadas(self, venda_id) -> dict | None:
+        return self.venda_repository.buscar_vendas_finalizadas(venda_id)
 
     def inicializar_venda(self, itens_vendas: list[dict], caixa: Caixa) -> dict | list:
         
@@ -161,7 +164,6 @@ class VendaService:
     def finalizar_venda(
             self,
             caixa: Caixa,
-            pagamentos_caixa: PagamentosCaixa, 
             venda_finalizada: VendaFinalizada, 
             venda_iniciada: VendaInicializada, 
             valor_dinheiro=None
@@ -212,22 +214,30 @@ class VendaService:
             horario=datetime.now().strftime("%H:%M"),
             data=datetime.now().strftime("%d/%m/%Y")
         )
-        
-        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
+
+        pagamentos_caixa = PagamentosCaixa(
+            pagamento_id=None,
+            caixa_id=buscar_caixa['caixa_id'],
+            forma_pagamento=resultado_repository['pagamento']['forma'],
+            valor_total_venda=buscar_venda['valor_total'],
+            valor_pago=resultado_repository['pagamento']['valor_pago']
+        )
+
+        resultado_pagamentos_caixa = self.caixa_service.inserir_pagamentos_caixa(caixa, pagamentos_caixa, troco)
         
         atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
 
         if isinstance(atualizar_status, dict) and "erro" in atualizar_status:
             return atualizar_status
         
-        resultado_pagamento_caixa = self.caixa_service.inserir_pagamentos_caixa(caixa, pagamentos_caixa)
-
+        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
+        
         return {
             "sucesso": True,
             "venda": resultado_repository,
             "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
             "status_venda_iniciada": atualizar_status,
-            "resultado_pagamento_caixa": resultado_pagamento_caixa
+            "resultado_pagamento_caixa": resultado_pagamentos_caixa
         }
 
 
@@ -280,4 +290,3 @@ class VendaService:
             "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
             "status_venda": atualizar_status
         }
-    

@@ -47,12 +47,14 @@ class Tabelas:
     def tabela_pagamentos_caixa():
         return """
             CREATE TABLE IF NOT EXISTS pagamentos_caixa (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pagamento_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 caixa_id INTEGER NOT NULL,
                 forma_pagamento TEXT NOT NULL,
+                valor_total_venda NUMERIC(10,2) NOT NULL,
                 valor_pago NUMERIC(10,2) NOT NULL,
+                troco NUMERIC(10,2) DEFAULT 0.0,
                 FOREIGN KEY (caixa_id) REFERENCES caixas(caixa_id)
-            )
+        )
         """
     
     @staticmethod

@@ -15,9 +15,10 @@ class Caixa:
 
 @dataclass
 class PagamentosCaixa:
-    id: int 
+    pagamento_id: int 
     caixa_id: int
     forma_pagamento: FormaPagamentos
+    valor_total_venda: float
     valor_pago: float
 
 
