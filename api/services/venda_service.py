@@ -10,6 +10,7 @@ from api.services.produto_service import ProdutoService
 from api.validator.validator import Validator
 from api.services.classes.comprovante import Comprovante
 from api.services.caixa_service import CaixaService
+from api.validator.validator_status import ValidatorStatus
 from datetime import datetime
 import qrcode
 import base64
@@ -31,7 +32,7 @@ class VendaService:
         if not Validator.validar_negativos([venda.venda_quantidade]):
             return {"erro": "Informa valores acima de 0 para quantidade"}
         
-        if produto.status == StatusProduto.INATIVO:
+        if not ValidatorStatus.status_produto(produto.status):
             return {"erro": f"Produto {produto.nome_produto} está inativo no estoque"}
 
         self.carrinho.append({
@@ -251,11 +252,12 @@ class VendaService:
         
         return {"qrcode":img_base64}
 
-    def finalizar_venda_pix(self, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada) -> dict:
+    def finalizar_venda_pix(self, caixa: Caixa, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada) -> dict:
 
         troco = 0.0
         buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
         buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada.venda_id)
+        buscar_caixa = self.caixa_service.buscar_caixa_id(caixa.caixa_id)
 
         if not buscar_venda or not buscar_itens_venda: 
             return {"erro": "Venda não encontrada"}
@@ -277,16 +279,27 @@ class VendaService:
             data=datetime.now().strftime("%d/%m/%Y")
         )
 
-        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
+        pagamentos_caixa = PagamentosCaixa(
+            pagamento_id=None,
+            caixa_id=buscar_caixa['caixa_id'],
+            forma_pagamento=resultado_repository['pagamento']['forma'],
+            valor_total_venda=buscar_venda['valor_total'],
+            valor_pago=resultado_repository['pagamento']['valor_pago']
+        )
+        
+        resultado_pagamentos_caixa = self.caixa_service.inserir_pagamentos_caixa(caixa, pagamentos_caixa, troco)
 
         atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
 
         if isinstance(atualizar_status, dict) and "erro" in atualizar_status:
             return atualizar_status
 
+        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
+
         return {
             "sucesso": True,
             "venda": resultado_repository,
             "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
-            "status_venda": atualizar_status
+            "status_venda": atualizar_status,
+            "resultado_pagamento_caixa": resultado_pagamentos_caixa
         }

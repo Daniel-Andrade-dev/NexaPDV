@@ -143,9 +143,10 @@ def finalizar_venda_pix(venda_id: int):
             return jsonify({"erro": "Corpo da requisição inválida"}), 400
 
         busca_venda = venda_service.buscar_venda_iniciada(venda_id)
+        busca_caixa = caixa_service.buscar_caixa_id(payload['caixa_id'])
 
-        if busca_venda is None:
-            return jsonify({"erro": "Venda não encontrada"}), 404
+        if busca_venda is None or busca_caixa is None:
+            return jsonify({"erro": "Venda ou Caixa não encontrada"}), 404
         
         venda_finalizada = VendaFinalizada(
             id_venda=None,
@@ -163,7 +164,15 @@ def finalizar_venda_pix(venda_id: int):
             status=busca_venda['status']
         )
 
-        resultado_service = venda_service.finalizar_venda_pix(venda_finalizada, venda_iniciada)
+        caixa = Caixa(
+            caixa_id=busca_caixa['caixa_id'],
+            valor_inicial=busca_caixa['valor_inicial'],
+            horario_aberto=busca_caixa['horario_aberto'],
+            data_aberto=busca_caixa['data_aberto'],
+            status=busca_caixa['status']
+        )
+
+        resultado_service = venda_service.finalizar_venda_pix(caixa, venda_finalizada, venda_iniciada)
 
         if "erro" in resultado_service:
             return jsonify(resultado_service), 400
