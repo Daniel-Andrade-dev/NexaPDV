@@ -1,0 +1,326 @@
+from api.models.venda.venda import VendaFinalizada, VendaInicializada
+from api.models.produto.produto import Produto
+from api.models.caixa.caixa import Caixa, PagamentosCaixa
+from api.enums.forma_pagamento import FormaPagamentos
+from api.enums.status_produto import StatusProduto
+from api.enums.status_venda import StatusVenda
+from api.enums.status_caixa import StatusCaixa
+from api.repository.venda_repository import VendaRepository
+from api.services.produto_service import ProdutoService
+from api.validator.validator import Validator
+from api.services.classes.comprovante import Comprovante
+from api.services.caixa_service import CaixaService
+from api.services.classes.desconto import Desconto
+from datetime import datetime
+import qrcode
+import base64
+import io
+
+class VendaService:
+    
+    def __init__(self, venda_repository=None):
+        self.venda_repository = venda_repository or VendaRepository()
+        self.produto_service = ProdutoService()
+        self.caixa_service = CaixaService()
+        self.comprovante = Comprovante()
+        self.carrinho = []
+
+    def adicionar_ao_carrinho(self, venda: VendaInicializada, produto: Produto) -> list:
+        if not Validator.validar_campos([produto.codigo, venda.venda_quantidade]):
+            return {"erro": "Preenche os campos para iniciar a VENDA"}
+        
+        if not Validator.validar_negativos([venda.venda_quantidade]):
+            return {"erro": "Informa valores acima de 0 para quantidade"}
+        
+        if produto.status == StatusProduto.INATIVO:
+            return {"erro": f"Produto {produto.nome_produto} está inativo no estoque"}
+
+        self.carrinho.append({
+            "codigo_produto": produto.codigo,
+            "nome_produto": produto.nome_produto,
+            "preco_unitario": produto.preco_unitario,
+            "quantidade_venda": venda.venda_quantidade,
+            "horario_inicializada": venda.horario_inicializada,
+            "data_inicializada": venda.data_inicializada,
+            "valor_total_produto": round(produto.preco_unitario * venda.venda_quantidade, 2),
+            "status": venda.status
+        })
+
+        return self.carrinho
+
+    # A função e responsável por retorna apenas o que precisa do carrinho para API
+    def carrinho_api(self, carrinho_atual: list[dict]) -> list:
+        response = []
+        for item in carrinho_atual:
+            response.append({
+                "codigo_produto": item['codigo_produto'],
+                "nome_produto": item['nome_produto'],
+                "preco_unitario": item['preco_unitario'],
+                "quantidade_venda": item['quantidade_venda'],
+                "valor_total_produto": item['valor_total_produto']
+            })
+
+        return response
+    
+    # A função e responsável por retorna apenas os dados que precisa para API
+    def response_api_venda_iniciada(self, _response: list[dict]) -> list:
+        response = []
+        for item in _response:
+            response.append({
+                "sucesso": item['sucesso'],
+                "itens": item['carrinho_atual'],
+                "msg": item['msg'],
+                "venda": item['venda']
+            })
+
+        return response
+    
+    # A função e responsável por retorna apenas os dados que precisa para API
+    def response_api_venda_finalizada(self, _response: list[dict]) -> dict:
+        response = []
+        for venda in _response:
+            response.append({
+                "sucesso": venda['sucesso'],
+                "venda": venda['venda'],
+                "dados_internos": {
+                    "msg_comprovante":venda['msg_comprovante']['msg'],
+                    "msg_pagamento_caixa": venda['resultado_pagamento_caixa']['msg'],
+                    "status_venda_iniciada": venda['status_venda_iniciada']['msg']
+                }
+            })
+
+        return response
+
+    def calcular_valor_total_venda(self) -> float:
+        return round(
+            sum(
+                item['preco_unitario'] * item['quantidade_venda'] 
+                for item in self.carrinho
+            ), 
+        2)
+
+    def calcular_troco_e_verificar(self, valor_total: float, valor_dinheiro: float) -> dict | float:
+        if valor_dinheiro < valor_total:
+            return {"erro": f"Valor insuficiente. Faltam R${valor_total - valor_dinheiro:.2f}"}
+        
+        if valor_dinheiro == valor_total: return 0.0
+
+        return round(valor_dinheiro - valor_total, 2)
+
+    def buscar_venda_iniciada(self, venda_id) -> dict | None:
+        return self.venda_repository.buscar_venda_inicializada(venda_id)
+
+    def buscar_venda_finalizadas(self, venda_id) -> dict | None:
+        return self.venda_repository.buscar_vendas_finalizadas(venda_id)
+
+    def inicializar_venda(self, itens_vendas: list[dict], caixa: Caixa) -> dict | list:
+        
+        carrinho_atual = self.carrinho
+        baixa_estoque = None
+        response = []
+
+        resultado_caixa = self.caixa_service.buscar_caixa_id(caixa.caixa_id)
+
+        if resultado_caixa is None:
+            return {"erro": f"Caixa {caixa.caixa_id} não encontrado"}
+
+        if resultado_caixa['status'] != StatusCaixa.ABERTO:
+            return {"erro": f"Caixa {caixa.caixa_id} está fechado, faça a abertura para realizar as vendas"}
+        
+        for item in itens_vendas:
+
+            baixa_estoque = self.produto_service.baixa_estoque(item['produto_obj'],item['venda_obj'])
+
+            if isinstance(baixa_estoque, dict) and "erro" in baixa_estoque:
+                return baixa_estoque
+
+            carrinho_atual = self.adicionar_ao_carrinho(item['venda_obj'],item['produto_obj'])
+
+            if isinstance(carrinho_atual, dict) and "erro" in carrinho_atual:
+                return carrinho_atual
+
+        subtotal = self.calcular_valor_total_venda()
+        desconto = Desconto.aplicar_desconto(subtotal)
+        valor_total = round(subtotal - desconto, 2)
+      
+        response_carrinho = self.carrinho_api(carrinho_atual)
+
+        resultado_repository = self.venda_repository.inicializar_vendas(
+            carrinho_atual.copy(),
+            desconto,
+            subtotal,
+            valor_total
+        )
+
+        self.venda_repository.inserir_itens_venda(response_carrinho, resultado_repository['venda_id'])
+
+        if isinstance(resultado_repository, dict) and "erro" in resultado_repository:
+            return resultado_repository
+
+        self.carrinho.clear()
+        response.append({
+            "sucesso": True,
+            "msg": "Venda iniciada com sucesso",
+            "carrinho_atual": response_carrinho,
+            "venda": resultado_repository,
+            "estoque": baixa_estoque['sucesso'],
+        })
+
+        return self.response_api_venda_iniciada(response)
+    
+    def cancelar_venda(self, venda_iniciada: VendaInicializada) -> dict:
+        if not isinstance(venda_iniciada, VendaInicializada):
+            return {"erro": "Objeto inválido. Esperado tipo Venda"}
+
+        buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
+
+        if buscar_venda['status'] == StatusVenda.CONCLUIDA:
+            return {"erro": "Não e possível cancelar vendas concluídas"}
+
+        if buscar_venda['status'] == StatusVenda.CANCELADA:
+            return {"erro": "A venda já está cancelada. Tente novamente"}
+
+        resultado_repository = self.venda_repository.cancelar_venda(venda_iniciada)
+
+        return resultado_repository
+
+    def finalizar_venda(
+            self,
+            caixa: Caixa,
+            venda_finalizada: VendaFinalizada, 
+            venda_iniciada: VendaInicializada, 
+            valor_dinheiro=None
+        ) -> dict:
+
+        if not isinstance(venda_finalizada, VendaFinalizada) or not isinstance(venda_iniciada, VendaInicializada):
+            return {"erro": "Objeto inválido. Esperado tipo Venda"}
+
+        buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
+        buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada.venda_id)
+        buscar_caixa = self.caixa_service.buscar_caixa_id(caixa.caixa_id)
+        response = []
+
+        if buscar_caixa['status'] != StatusCaixa.ABERTO:
+            return {"erro": f"Caixa {caixa.caixa_id} está fechado, faça abertura para finalizar a venda"}
+    
+        if buscar_venda['status'] == StatusVenda.CONCLUIDA:
+            return {"erro": "Venda já está concluída. Tente novamente"}
+
+        if buscar_venda['status'] == StatusVenda.CANCELADA:
+            return {"erro": "Não e possível finalizar vendas canceladas"}
+
+        if venda_finalizada.forma_pagamento not in [forma.value for forma in FormaPagamentos]:
+            return {"erro": f"Forma de pagamento inválido"}
+
+        troco = 0.0
+        if venda_finalizada.forma_pagamento == FormaPagamentos.DINHEIRO:
+            if not Validator.validar_negativos([valor_dinheiro]):
+                return {"erro": "Informe valores acima de 0 para finalizar"}
+            
+            troco = self.calcular_troco_e_verificar(buscar_venda['valor_total'], valor_dinheiro)
+
+            if isinstance(troco, dict) and "erro" in troco:
+                return troco
+
+        # Se a forma de pagamento não for dinheiro automaticamente será inserida no banco
+        # Sendo débito ou crédito
+        resultado_repository = self.venda_repository.finalizar_venda(
+            venda=venda_finalizada,
+            valor_total=buscar_venda['valor_total'],
+            troco=troco,
+            horario=datetime.now().strftime("%H:%M"),
+            data=datetime.now().strftime("%d/%m/%Y")
+        )
+
+        pagamentos_caixa = PagamentosCaixa(
+            pagamento_id=None,
+            caixa_id=buscar_caixa['caixa_id'],
+            forma_pagamento=resultado_repository['pagamento']['forma'],
+            valor_total_venda=buscar_venda['valor_total'],
+            valor_pago=resultado_repository['pagamento']['valor_pago']
+        )
+
+        resultado_pagamentos_caixa = self.caixa_service.inserir_pagamentos_caixa(caixa, pagamentos_caixa, troco)
+        
+        atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
+
+        if isinstance(atualizar_status, dict) and "erro" in atualizar_status:
+            return atualizar_status
+        
+        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
+
+        response.append({
+            "sucesso": True,
+            "venda": resultado_repository,
+            "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
+            "status_venda_iniciada": atualizar_status,
+            "resultado_pagamento_caixa": resultado_pagamentos_caixa
+        })
+
+        return self.response_api_venda_finalizada(response)
+
+
+    def gerar_qrcode(self) -> dict:
+        img = qrcode.make("Pagamento feito com sucesso")
+
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        
+        img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        
+        return {"qrcode":img_base64}
+
+    def finalizar_venda_pix(self, caixa: Caixa, venda_finalizada: VendaFinalizada, venda_iniciada: VendaInicializada) -> dict:
+        
+        buscar_venda = self.buscar_venda_iniciada(venda_iniciada.venda_id)
+        buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada.venda_id)
+        buscar_caixa = self.caixa_service.buscar_caixa_id(caixa.caixa_id)
+        response = []
+        troco = 0.0
+
+        if buscar_caixa['status'] != StatusCaixa.ABERTO:
+            return {"erro": f"Caixa {caixa.caixa_id} está fechado, faça abertura para finalizar a venda"}
+
+        if buscar_venda['status'] == StatusVenda.CONCLUIDA:
+            return {"erro": "Venda já está concluída. Tente novamente"}
+        
+        if buscar_venda['status'] == StatusVenda.CANCELADA:
+            return {"erro": "Não e possível finalizar vendas canceladas"}
+
+        if venda_finalizada.forma_pagamento != FormaPagamentos.PIX:
+            return {"erro": "Apenas pagamentos em PIX são permitidos"}
+        
+        resultado_repository = self.venda_repository.finalizar_venda(
+            venda=venda_finalizada,
+            valor_total=buscar_venda['valor_total'],
+            troco=troco,
+            horario=datetime.now().strftime("%H:%M"),
+            data=datetime.now().strftime("%d/%m/%Y")
+        )
+
+        pagamentos_caixa = PagamentosCaixa(
+            pagamento_id=None,
+            caixa_id=buscar_caixa['caixa_id'],
+            forma_pagamento=resultado_repository['pagamento']['forma'],
+            valor_total_venda=buscar_venda['valor_total'],
+            valor_pago=resultado_repository['pagamento']['valor_pago']
+        )
+
+        resultado_pagamentos_caixa = self.caixa_service.inserir_pagamentos_caixa(caixa, pagamentos_caixa, troco)
+
+        comprovante = self.comprovante.modelo_comprovante(buscar_itens_venda, troco, venda_iniciada, venda_finalizada)
+
+        atualizar_status = self.venda_repository.atualizar_status_venda(venda_finalizada, venda_iniciada)
+
+        if isinstance(atualizar_status, dict) and "erro" in atualizar_status:
+            return atualizar_status
+
+        response.append({
+            "sucesso": True,
+            "venda": resultado_repository,
+            "msg_comprovante": self.comprovante.criar_arquivo_comprovante(venda_iniciada, comprovante),
+            "status_venda_iniciada": atualizar_status,
+            "resultado_pagamento_caixa": resultado_pagamentos_caixa
+        })
+
+        return self.response_api_venda_finalizada(response)
