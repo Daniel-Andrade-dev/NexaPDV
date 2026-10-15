@@ -1,0 +1,1116 @@
+{
+  "info": {
+    "name": "API NexaPDV",
+    "description": null,
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "CRUDS",
+      "item": [
+        {
+          "name": "CATEGORIA",
+          "item": [
+            {
+              "name": "Cadastro Categoria",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/categorias",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "categorias"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoria\": \"bebidas\",\n  \"status\": \"inativo\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Buscar Categoria",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/categorias/{{categoria_id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "categorias",
+                    "{{categoria_id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Listar Categorias",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/categoria",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "categoria"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Deletar Categoria",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/categorias/{{categoria_id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "categorias",
+                    "{{categoria_id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Atualizar Categoria",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/categorias/{{categoria_id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "categorias",
+                    "{{categoria_id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"frios\",\n  \"status\": \"ativo\" \n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "PRODUTO",
+          "item": [
+            {
+              "name": "Atualizar Produto",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/produtos/{{codigo_produto}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "produtos",
+                    "{{codigo_produto}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome_produto\": \"chocolate nestle teste\",\n  \"categoria_id\": 3,\n  \"preco_unitario\": 10,\n  \"estoque\": 52288,\n  \"categoria\": \"doce\",\n  \"status\": \"ativo\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Produtos Cadastrados",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/produtos",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "produtos"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Buscar Produto",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/produtos/{{codigo_produto}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "produtos",
+                    "{{codigo_produto}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Cadastro Produto",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/produtos",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "produtos"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome_produto\": \"cawqedsad\",\n  \"categoria_id\": {{categoria_id}},\n  \"preco_unitario\": 15.34,\n  \"estoque\": 40,\n  \"status\": \"ativo\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Deletar Produto",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/produtos/{{codigo_produto}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "produtos",
+                    "{{codigo_produto}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PDV",
+      "item": [
+        {
+          "name": "Finalizar Vendas",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/finalizar_venda/{{venda_id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "finalizar_venda",
+                "{{venda_id}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"forma_pagamento\": \"dinheiro\",\n  \"valor_dinheiro\": 360.78,\n  \"caixa_id\": {{caixa_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Inicializar Vendas",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/iniciar_venda/{{caixa_id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "iniciar_venda",
+                "{{caixa_id}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "  {\n    \"itens\": [\n      {\n        \"codigo_produto\": 2,\n        \"quantidade_venda\": 19\n      },\n        {\n        \"codigo_produto\": 2,\n        \"quantidade_venda\": 14\n      }  \n    ]\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Finalizar Vendas PIX",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/finalizar_venda/pix/{{venda_id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "finalizar_venda",
+                "pix",
+                "{{venda_id}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"forma_pagamento\": \"pix\",\n  \"caixa_id\": {{caixa_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cancelar Vendas",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/cancelar_venda/{{venda_Id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "cancelar_venda",
+                "{{venda_Id}}"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "QRCODE",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/qrcode/pix",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "qrcode",
+                "pix"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RELATÓRIO VENDAS",
+      "item": [
+        {
+          "name": "Vendas Finalizada",
+          "item": [
+            {
+              "name": "Ticket Médio Finalizadas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/vendas_finalizadas/ticket_medio",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "vendas_finalizadas",
+                    "ticket_medio"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Total Vendas Finalizadas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/total_vendas_finalizadas",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "total_vendas_finalizadas"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Vendas Finalizadas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/vendas_finalizadas",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "vendas_finalizadas"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Buscar Venda",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/vendas/finalizada/{{venda_Id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "vendas",
+                    "finalizada",
+                    "{{venda_Id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vendas Iniciada",
+          "item": [
+            {
+              "name": "Vendas Iniciadas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/vendas_iniciadas",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "vendas_iniciadas"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Total Vendas Iniciadas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/total_vendas_iniciadas",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "total_vendas_iniciadas"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Buscar Venda",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/vendas/{{venda_Id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "vendas",
+                    "{{venda_Id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vendas Cancelada",
+          "item": [
+            {
+              "name": "Total Vendas Canceladas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/total_vendas_canceladas",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "total_vendas_canceladas"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Vendas Canceladas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/vendas_canceladas",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "vendas_canceladas"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RELATÓRIO PRODUTOS",
+      "item": [
+        {
+          "name": "Total estoque",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/total_estoque",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "total_estoque"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Total produto ativos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/produtos_ativos",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "produtos_ativos"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Total produto  inativos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/produtos_inativos",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "produtos_inativos"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "CAIXA",
+      "item": [
+        {
+          "name": "Sangrias",
+          "item": [
+            {
+              "name": "Inserir sangria",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/caixas/sangrias/{{caixa_id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "caixas",
+                    "sangrias",
+                    "{{caixa_id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"valor_retirado\": 30\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Realizar sangria Caixa",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/caixas/sangria/{{caixa_id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "caixas",
+                    "sangria",
+                    "{{caixa_id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sangria_id\": {{sangria_id}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Buscar Sangria",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/sangria/{{sangria_id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "sangria",
+                    "{{sangria_id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            },
+            {
+              "name": "Valor total sangria cada Caixa",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "",
+                "url": {
+                  "raw": "http://127.0.0.1:5000/sangria/valor_total/{{caixa_id}}",
+                  "protocol": "http",
+                  "host": [
+                    "127",
+                    "0",
+                    "0",
+                    "1:5000"
+                  ],
+                  "path": [
+                    "sangria",
+                    "valor_total",
+                    "{{caixa_id}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Abertura de Caixa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/caixas/{{caixa_id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "caixas",
+                "{{caixa_id}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valor_inicial\": 780\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar Caixa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/caixas",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "caixas"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Buscar Caixa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/caixas/{{caixa_id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "caixas",
+                "{{caixa_id}}"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Caixas ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/caixas",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "caixas"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Lista pagamentos caixa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/caixas/pagamentos",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "caixas",
+                "pagamentos"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Buscar Pagamentos Dinheiro",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/pagamentos/dinheiro/{{pagamento_id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "pagamentos",
+                "dinheiro",
+                "{{pagamento_id}}"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Fechamento Caixa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://127.0.0.1:5000/caixas/fechamento/{{caixa_id}}",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:5000"
+              ],
+              "path": [
+                "caixas",
+                "fechamento",
+                "{{caixa_id}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valor_contado\": 890\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "venda_Id",
+      "value": "933",
+      "type": "default"
+    },
+    {
+      "key": "venda_id",
+      "value": "1",
+      "type": "default"
+    },
+    {
+      "key": "categoria_id",
+      "value": "1",
+      "type": "default"
+    },
+    {
+      "key": "codigo_produto",
+      "value": "4",
+      "type": "default"
+    },
+    {
+      "key": "caixa_id",
+      "value": "1",
+      "type": "default"
+    },
+    {
+      "key": "pagamento_id",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "sangria_id",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
