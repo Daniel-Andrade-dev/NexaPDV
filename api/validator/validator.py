@@ -31,12 +31,12 @@ class ValidatorVenda:
         buscar_venda_iniciada = self.relatorio_venda_iniciada.buscar_vendas_iniciadas(venda_iniciada_id)
 
         if buscar_venda_iniciada['status'] == StatusVenda.CONCLUIDA: return {
-            "status": 409,
+            "status": 400,
             "erro": "Venda já está concluída, faça outra venda que esteja aberta"
         }
             
         if buscar_venda_iniciada['status'] == StatusVenda.CANCELADA: return {
-            "status": 409,
+            "status": 400,
             "erro": "Venda está cancelada, faça outra venda que esteja aberta"
         }
 

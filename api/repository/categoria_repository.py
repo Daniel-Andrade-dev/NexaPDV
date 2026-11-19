@@ -37,7 +37,7 @@ class CategoriaRepository:
                 }
         except sqlite3.IntegrityError:
             return {
-                "status": 409,
+                "status": 400,
                 "erro": f"Categoria {categoria.nome} já está cadastrada. Tente novamente"
             }
 

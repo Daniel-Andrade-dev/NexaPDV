@@ -39,7 +39,7 @@ class CaixaService:
 
         if resultado_caixa['status'] == StatusCaixa.ABERTO:
             return {
-                "status": 409,
+                "status": 400,
                 "erro": f"Caixa {resultado_caixa['caixa_id']} já está aberto. Tente novamente"
             }
 
@@ -61,7 +61,7 @@ class CaixaService:
         
         if buscar_caixa['status'] == StatusCaixa.FECHADO:
             return {
-                "status": 409,
+                "status": 400,
                 "erro": f"O caixa {buscar_caixa['caixa_id']} já está fechado"
             }
 

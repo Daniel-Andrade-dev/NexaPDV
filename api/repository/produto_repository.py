@@ -51,7 +51,7 @@ class ProdutoRepository:
             }
         except sqlite3.IntegrityError:
             return {
-                "status": 409,
+                "status": 400,
                 "erro": f"Produto {produto.nome_produto} já está cadastrado. Tente novamente."
             }
 
