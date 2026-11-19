@@ -1,0 +1,9 @@
+
+
+### 1 Sangria pode ser descontada em dobro
+
+PUT /caixas/sangria/<id>
+debita o valor de `valor_inicial_centavos, 
+**e** o fechamento subtrai o SUM
+das sangrias do valor esperado. Se as duas etapas forem usadas, 
+o valor é descontado duas vezes no cálculo de `valor_esperado_centavos.

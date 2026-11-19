@@ -1,0 +1,26 @@
+
+
+
+# --- Ambiente virtual ---
+venv/
+.venv/
+
+
+# --- Banco de dados local ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+
+# Pasta para ver o tempo de execução das funções
+monitoramento_funcoes/
+
+# Comprovantes
+comprovantes/
