@@ -14,7 +14,7 @@ from api.classes.response_format import VendaResponseFormat, CarrinhoResponseFor
 from api.services.relatorios_service.relatorio_venda_service import RelatorioVendasService
 from api.repository.venda_repository import VendaRepository
 from api.decorators.time_func import medir_tempo_execucao
-from api.validator.validator import Validator, ValidatorVenda
+from api.validator.validator import Validator, ValidatorVenda, ValidatorCaixa
 from api.services.carrinho import Carrinho
 from datetime import datetime
 import qrcode
@@ -30,6 +30,7 @@ class VendaService:
         self.caixa_service = CaixaService()
         self.comprovante = Comprovante()
         self.validar_status = ValidatorVenda()
+        self.validar_caixa = ValidatorCaixa()
 
     def calcular_troco_e_verificar(self, valor_total_centavos: int, valor_dinheiro_centavos: int) -> dict | int:
         if valor_dinheiro_centavos < valor_total_centavos:
@@ -45,16 +46,11 @@ class VendaService:
     @medir_tempo_execucao
     def iniciar_venda(self, itens_vendas: list[dict], caixa_id: int) -> dict | None | list:
 
-        buscar_caixa = self.caixa_service.buscar_caixa_id(caixa_id)
+        validator_caixa = self.validar_caixa.validar_status(caixa_id)
         carrinho_obj = Carrinho() # []
         response = []
 
-        if "erro" in buscar_caixa: return buscar_caixa
-
-        if buscar_caixa['status'] != StatusCaixa.ABERTO: return {
-            "status": 400,
-            "erro": f"Faça a abertura do caixa para iniciar as vendas"
-        }
+        if "erro" in validator_caixa: return validator_caixa
 
         if not itens_vendas: return {
             "status": 400,
@@ -66,8 +62,7 @@ class VendaService:
                 item["codigo_produto"]
             )
 
-            if "erro" in buscar_produto:
-                return buscar_produto
+            if "erro" in buscar_produto: return buscar_produto
 
             if buscar_produto['status'] == StatusProduto.INATIVO:
                 return {
@@ -80,8 +75,7 @@ class VendaService:
                 item['venda_obj']
             )
 
-            if isinstance(baixa_estoque, dict) and "erro" in baixa_estoque:
-                return baixa_estoque
+            if isinstance(baixa_estoque, dict) and "erro" in baixa_estoque: return baixa_estoque
             
             produto_obj = Produto(
                 codigo_produto=buscar_produto['codigo_produto'],
@@ -105,14 +99,12 @@ class VendaService:
             valor_total_centavos
         ) 
 
-        if isinstance(resultado_repository, dict) and "erro" in resultado_repository:
-            return resultado_repository
+        if isinstance(resultado_repository, dict) and "erro" in resultado_repository: return resultado_repository
         
         response_carrinho = CarrinhoResponseFormat.response_api_carrinho(carrinho_obj.itens)
         inserir_itens = self.venda_repository.inserir_itens_venda(carrinho_obj.itens, resultado_repository['venda_iniciada_id'])
 
-        if isinstance(inserir_itens, dict) and "erro" in inserir_itens:
-            return inserir_itens
+        if isinstance(inserir_itens, dict) and "erro" in inserir_itens: return inserir_itens
 
         carrinho_obj.limpar_carrinho()
         response.append({
@@ -127,32 +119,22 @@ class VendaService:
     @medir_tempo_execucao
     def cancelar_venda(self, venda_iniciada_id: int) -> dict:
 
-        buscar_venda_iniciada = self.relatorio_venda_service.buscar_vendas_iniciadas(venda_iniciada_id)
+        validator_venda = self.validar_status.validar_status_venda_cancelada(venda_iniciada_id)
         itens = self.venda_repository.buscar_itens_venda(venda_iniciada_id)
 
-        if "erro" in buscar_venda_iniciada: return buscar_venda_iniciada
+        if "erro" in validator_venda: return validator_venda
 
         if not itens: return {
             "status": 404,
-            "erro": f"Não há itens na venda ID {buscar_venda_iniciada['venda_iniciada_id']}"
-        }
-
-        if buscar_venda_iniciada['status'] == StatusVenda.CONCLUIDA: return {
-            "status": 400,
-            "erro": "Não é possível cancelar vendas concluídas"
-        }
-
-        if buscar_venda_iniciada['status'] == StatusVenda.CANCELADA: return {
-            "status": 400,
-            "erro": "A venda iniciada já está cancelada"
+            "erro": f"Não há itens na venda ID {validator_venda['venda_iniciada']['venda_iniciada_id']}"
         }
 
         venda_iniciada = VendaIniciada(
-            venda_iniciada_id=buscar_venda_iniciada['venda_iniciada_id'],
-            quantidade_venda=buscar_venda_iniciada['quantidade_venda'],
-            horario_iniciada=buscar_venda_iniciada['horario_iniciada'],
-            data_iniciada=buscar_venda_iniciada['data_iniciada'],
-            status=buscar_venda_iniciada['status']
+            venda_iniciada_id=validator_venda['venda_iniciada']['venda_iniciada_id'],
+            quantidade_venda=validator_venda['venda_iniciada']['quantidade_venda'],
+            horario_iniciada=validator_venda['venda_iniciada']['horario_iniciada'],
+            data_iniciada=validator_venda['venda_iniciada']['data_iniciada'],
+            status=validator_venda['venda_iniciada']['status']
         )
 
         response_produto = []
@@ -165,7 +147,7 @@ class VendaService:
             response_produto.append(response)
             
         return {
-            "resultado_venda_cancelada": self.venda_repository.cancelar_venda(buscar_venda_iniciada['venda_iniciada_id']),
+            "resultado_venda_cancelada": self.venda_repository.cancelar_venda(validator_venda['venda_iniciada']['venda_iniciada_id']),
             "resultado_produto": response_produto
         }
 
@@ -178,13 +160,15 @@ class VendaService:
             valor_dinheiro=None
         ) -> dict | None:
 
-        validator_venda = self.validar_status.validar_status(caixa_id, venda_iniciada_id)
+        validator_venda = self.validar_status.validar_status(venda_iniciada_id)
+        validator_caixa = self.validar_caixa.validar_status(caixa_id)
         buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada_id)
         forma_pagamento_invalido = PagamentoInvalido().verificar_pagamento_invalido(venda_finalizada.forma_pagamento)
         response = []
 
-        if "erro" in validator_venda:
-            return validator_venda
+        if "erro" in validator_caixa: return validator_caixa
+
+        if "erro" in validator_venda: return validator_venda
 
         if isinstance(forma_pagamento_invalido, dict) and "erro" in forma_pagamento_invalido:
             return forma_pagamento_invalido
@@ -205,11 +189,11 @@ class VendaService:
                 return troco_centavos
 
         caixa = Caixa(
-            caixa_id=validator_venda['caixa']['caixa_id'],
-            valor_inicial_centavos=validator_venda['caixa']['valor_inicial_centavos'],
-            horario_aberto=validator_venda['caixa']['horario_aberto'],
-            data_aberto=validator_venda['caixa']['data_aberto'],
-            status=validator_venda['caixa']['status']
+            caixa_id=validator_caixa['caixa']['caixa_id'],
+            valor_inicial_centavos=validator_caixa['caixa']['valor_inicial_centavos'],
+            horario_aberto=validator_caixa['caixa']['horario_aberto'],
+            data_aberto=validator_caixa['caixa']['data_aberto'],
+            status=validator_caixa['caixa']['status']
         )
 
         venda_iniciada = VendaIniciada(
@@ -233,7 +217,7 @@ class VendaService:
 
         pagamentos_caixa = PagamentosCaixa(
             pagamento_id=None,
-            caixa_id=validator_venda['caixa']['caixa_id'],
+            caixa_id=validator_caixa['caixa']['caixa_id'],
             forma_pagamento=resultado_repository['pagamento']['forma'],
             valor_total_venda_centavos=validator_venda['venda_iniciada']['valor_total_centavos'],
             valor_pago_centavos=resultado_repository['pagamento']['valor_pago_centavos']
@@ -279,10 +263,14 @@ class VendaService:
     @medir_tempo_execucao
     def finalizar_venda_pix(self, caixa_id: int, venda_finalizada: VendaFinalizada, venda_iniciada_id: int) -> dict | None:
 
-        validator_venda = self.validar_status.validar_status(caixa_id, venda_iniciada_id)
+        validator_venda = self.validar_status.validar_status(venda_iniciada_id)
+        validator_caixa = self.validar_caixa.validar_status(caixa_id)
         buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada_id)
         forma_pagamento_invalido_pix = PagamentoInvalido().verificar_pagamento_pix_invalido(venda_finalizada.forma_pagamento)
         response = []
+
+        if "erro" in validator_caixa:
+            return validator_caixa
 
         if "erro" in validator_venda:
             return validator_venda
@@ -293,11 +281,11 @@ class VendaService:
         troco_centavos = 0
 
         caixa = Caixa(
-            caixa_id=validator_venda['caixa']['caixa_id'],
-            valor_inicial_centavos=validator_venda['caixa']['valor_inicial_centavos'],
-            horario_aberto=validator_venda['caixa']['horario_aberto'],
-            data_aberto=validator_venda['caixa']['data_aberto'],
-            status=validator_venda['caixa']['status']
+            caixa_id=validator_caixa['caixa']['caixa_id'],
+            valor_inicial_centavos=validator_caixa['caixa']['valor_inicial_centavos'],
+            horario_aberto=validator_caixa['caixa']['horario_aberto'],
+            data_aberto=validator_caixa['caixa']['data_aberto'],
+            status=validator_caixa['caixa']['status']
         )
 
         venda_iniciada = VendaIniciada(
@@ -321,7 +309,7 @@ class VendaService:
 
         pagamentos_caixa = PagamentosCaixa(
             pagamento_id=None,
-            caixa_id=validator_venda['caixa']['caixa_id'],
+            caixa_id=validator_caixa['caixa']['caixa_id'],
             forma_pagamento=resultado_repository['pagamento']['forma'],
             valor_total_venda_centavos=validator_venda['venda_iniciada']['valor_total_centavos'],
             valor_pago_centavos=resultado_repository['pagamento']['valor_pago_centavos']
