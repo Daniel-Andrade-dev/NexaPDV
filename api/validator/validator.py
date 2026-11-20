@@ -7,17 +7,14 @@ class Validator:
 
     @staticmethod
     def validar_negativos(valores: list) -> bool:
-        for valor in valores:
-            if valor <= 0: 
-                return False 
-        return True 
+        return all(v > 0 for v in valores)
 
     @staticmethod
     def validar_campos(valores: list) -> bool:
-        for valor in valores: 
-            if not valor or str(valor) == "":
-                return False 
-        return True
+        return all(
+            valor is not None and str(valor).strip() != ""
+            for valor in valores
+        )
 
 
 class ValidatorVenda:
