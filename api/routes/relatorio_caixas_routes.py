@@ -1,4 +1,4 @@
-from flask import jsonify, request, Blueprint
+from flask import jsonify, Blueprint
 
 from api.services.relatorios_service.relatorios_caixas_service import (
     RelatoriosCaixasService

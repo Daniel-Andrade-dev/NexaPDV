@@ -3,8 +3,6 @@ from api.models.produto.produto import Produto
 from api.models.caixa.caixa import Caixa, PagamentosCaixa
 from api.enums.forma_pagamento import FormaPagamentos
 from api.enums.status_produto import StatusProduto
-from api.enums.status_venda import StatusVenda
-from api.enums.status_caixa import StatusCaixa
 from api.services.produto_service import ProdutoService
 from api.classes.comprovante import Comprovante
 from api.services.caixa_service import CaixaService
