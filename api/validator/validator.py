@@ -1,7 +1,6 @@
 from api.enums.status_caixa import StatusCaixa
 from api.enums.status_venda import StatusVenda
 
-# Melhorar validações genericas
 
 class Validator:
 
