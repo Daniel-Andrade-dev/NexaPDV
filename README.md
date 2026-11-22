@@ -356,20 +356,6 @@ A separação entre front-end e back-end permitirá que a interface seja
 desenvolvida independentemente das regras de negócio implementadas na
 API
 
-## Observações sobre a coleção de rotas
 
--   A coleção apresenta a rota `GET /relatorios/caixas_cadastrados`, mas
-    a requisição chamada **"Buscar Caixa Cadastrado"** está sem URL
-    definida. Por isso, ela não foi documentada como um endpoint
-    funcional separado.
--   A coleção não informa os formatos das respostas, os códigos HTTP
-    retornados, os mecanismos de autenticação ou os detalhes internos
-    das validações. Esses pontos devem ser documentados a partir do
-    comportamento real da API.
--   Os caminhos e métodos descritos neste README refletem a coleção JSON
-    fornecida; confirme-os com a implementação atual antes de publicar a
-    documentação como contrato definitivo.
-
-------------------------------------------------------------------------
 
 **NexaPDV --- Sistema de Ponto de Venda.**
