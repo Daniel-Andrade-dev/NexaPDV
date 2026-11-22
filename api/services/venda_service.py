@@ -44,7 +44,7 @@ class VendaService:
     @medir_tempo_execucao
     def iniciar_venda(self, itens_vendas: list[dict], caixa_id: int) -> dict | None | list:
 
-        validator_caixa = self.validar_caixa.validar_status(caixa_id)
+        validator_caixa = self.validar_caixa.validar_status_fechamento_caixa(caixa_id)
         carrinho_obj = Carrinho() # []
         response = []
 
@@ -159,7 +159,7 @@ class VendaService:
         ) -> dict | None:
 
         validator_venda = self.validar_status.validar_status(venda_iniciada_id)
-        validator_caixa = self.validar_caixa.validar_status(caixa_id)
+        validator_caixa = self.validar_caixa.validar_status_fechamento_caixa(caixa_id)
         buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada_id)
         forma_pagamento_invalido = PagamentoInvalido().verificar_pagamento_invalido(venda_finalizada.forma_pagamento)
         response = []
@@ -262,16 +262,13 @@ class VendaService:
     def finalizar_venda_pix(self, caixa_id: int, venda_finalizada: VendaFinalizada, venda_iniciada_id: int) -> dict | None:
 
         validator_venda = self.validar_status.validar_status(venda_iniciada_id)
-        validator_caixa = self.validar_caixa.validar_status(caixa_id)
+        validator_caixa = self.validar_caixa.validar_status_fechamento_caixa(caixa_id)
         buscar_itens_venda = self.venda_repository.buscar_itens_venda(venda_iniciada_id)
         forma_pagamento_invalido_pix = PagamentoInvalido().verificar_pagamento_pix_invalido(venda_finalizada.forma_pagamento)
         response = []
 
-        if "erro" in validator_caixa:
-            return validator_caixa
-
-        if "erro" in validator_venda:
-            return validator_venda
+        if "erro" in validator_caixa: return validator_caixa
+        if "erro" in validator_venda: return validator_venda
 
         if isinstance(forma_pagamento_invalido_pix, dict) and "erro" in forma_pagamento_invalido_pix:
             return forma_pagamento_invalido_pix

@@ -1,13 +1,15 @@
 from api.models.caixa.caixa import Caixa, PagamentosCaixa, FechamentosCaixa, Sangrias
 from api.repository.caixa_repository import CaixaRepository
-from api.classes.convert_precos import ConvertPrecos
 from api.enums.status_caixa import StatusCaixa
 from api.validator.validator import Validator
+from api.validator.validator import ValidatorCaixa
 from datetime import datetime
 
 class CaixaService:
+    
     def __init__(self):
         self.caixa_repository = CaixaRepository()
+        self.validator_caixa = ValidatorCaixa()
 
     def calcular_valor_esperado(self, caixa: Caixa) -> int:
         valor_inicial = self.buscar_caixa_id(caixa.caixa_id)
@@ -27,24 +29,17 @@ class CaixaService:
         return self.caixa_repository.cadastrar_caixa(caixa)
 
     def abertura_caixa(self, caixa_id: int, valor_inicial_centavos: int) -> dict | None:
-        resultado_caixa = self.caixa_repository.buscar_caixa_id(caixa_id)
+        status_caixa = self.validator_caixa.validar_status_abertura_caixa(caixa_id)
 
-        if "erro" in resultado_caixa: 
-            return resultado_caixa
+        if "erro" in status_caixa: return status_caixa
 
         if valor_inicial_centavos < 0: return {
             "status": 400,
             "erro": "Informe valores acima de 0 ou igual a 0"
         }
 
-        if resultado_caixa['status'] == StatusCaixa.ABERTO:
-            return {
-                "status": 400,
-                "erro": f"Caixa {resultado_caixa['caixa_id']} já está aberto. Tente novamente"
-            }
-
         caixa = Caixa(
-            caixa_id=resultado_caixa['caixa_id'],
+            caixa_id=status_caixa['caixa']['caixa_id'],
             valor_inicial_centavos=valor_inicial_centavos,
             horario_aberto=datetime.now().strftime("%H:%M"),
             data_aberto=datetime.now().strftime("%Y-%m-%d"),
@@ -54,17 +49,10 @@ class CaixaService:
         return self.caixa_repository.abertura_caixa(caixa)
 
     def fechamento_caixa(self, caixa_id: int, fechamento_caixa: FechamentosCaixa) -> dict | None:
-        buscar_caixa = self.buscar_caixa_id(caixa_id)
+        status_caixa = self.validator_caixa.validar_status_fechamento_caixa(caixa_id)
 
-        if "erro" in buscar_caixa:
-            return buscar_caixa
+        if "erro" in status_caixa:  return status_caixa
         
-        if buscar_caixa['status'] == StatusCaixa.FECHADO:
-            return {
-                "status": 400,
-                "erro": f"O caixa {buscar_caixa['caixa_id']} já está fechado"
-            }
-
         if not Validator.validar_campos([fechamento_caixa.valor_contado_centavos]):
             return {
                 "status": 400,
@@ -72,10 +60,10 @@ class CaixaService:
             }
 
         caixa = Caixa(
-            caixa_id=buscar_caixa['caixa_id'],
-            valor_inicial_centavos=buscar_caixa['valor_inicial_centavos'],
-            horario_aberto=buscar_caixa['horario_aberto'],
-            data_aberto=buscar_caixa['data_aberto'],
+            caixa_id=status_caixa['caixa']['caixa_id'],
+            valor_inicial_centavos=status_caixa['caixa']['valor_inicial_centavos'],
+            horario_aberto=status_caixa['caixa']['horario_aberto'],
+            data_aberto=status_caixa['caixa']['data_aberto'],
             status=StatusCaixa.FECHADO
         )
 
@@ -88,7 +76,7 @@ class CaixaService:
 
         fechamento_caixa_obj = FechamentosCaixa(
             fechamento_id=fechamento_caixa.fechamento_id,
-            caixa_id=buscar_caixa['caixa_id'],
+            caixa_id=status_caixa['caixa']['caixa_id'],
             valor_esperado_centavos=valor_esperado_centavos,
             valor_contado_centavos=fechamento_caixa.valor_contado_centavos,
             diferenca_centavos=diferenca_centavos,

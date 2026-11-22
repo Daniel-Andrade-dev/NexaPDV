@@ -56,17 +56,31 @@ class ValidatorVenda:
 class ValidatorCaixa:
 
     def __init__(self):
-        from api.services.caixa_service import CaixaService
+        from api.repository.caixa_repository import CaixaRepository
 
-        self.caixa_service = CaixaService()
+        self.caixa_repository = CaixaRepository()
 
-    def validar_status(self, caixa_id: int):
-        buscar_caixa = self.caixa_service.buscar_caixa_id(caixa_id)
+    def retorno(self, caixa) -> dict:
+        return {"caixa": caixa}
+    
+    def validar_status_abertura_caixa(self, caixa_id: int) -> dict | None:
+        buscar_caixa = self.caixa_repository.buscar_caixa_id(caixa_id)
 
-        if buscar_caixa['status'] != StatusCaixa.ABERTO:
-            return {
-                "status": 400,
-                "erro": f"Caixa {buscar_caixa['caixa_id']} está fechado"
-            }
+    
+        if buscar_caixa['status'] == StatusCaixa.ABERTO: return {   
+            "status": 400,
+            "erro": f"O caixa {buscar_caixa['caixa_id']} já está aberto"
+        }
 
-        return {"caixa": buscar_caixa}
+        return self.retorno(buscar_caixa)
+
+
+    def validar_status_fechamento_caixa(self, caixa_id: int):
+        buscar_caixa = self.caixa_repository.buscar_caixa_id(caixa_id)
+
+        if buscar_caixa['status'] == StatusCaixa.FECHADO: return {
+            "status": 400,
+            "erro": f"Caixa {buscar_caixa['caixa_id']} já está fechado"
+        }
+
+        return self.retorno(buscar_caixa)
