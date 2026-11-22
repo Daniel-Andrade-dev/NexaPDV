@@ -354,7 +354,7 @@ web consumirá a API para disponibilizar as operações do PDV, incluindo:
 
 A separação entre front-end e back-end permitirá que a interface seja
 desenvolvida independentemente das regras de negócio implementadas na
-API.
+API
 
 ## Observações sobre a coleção de rotas
 
