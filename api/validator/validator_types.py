@@ -7,4 +7,4 @@ class ValidatorTypes:
         return {
             "status": 400,
             "erro": f"O valor {valor} precisa ser um inteiro"
-        } if not isinstance(valor, int) else valor
+        } if not isinstance(valor, int) else True
