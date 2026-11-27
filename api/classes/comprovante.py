@@ -4,11 +4,20 @@ from pathlib import Path
 
 from api.models.venda.venda import VendaFinalizada, VendaIniciada
 from api.classes.convert_precos import ConvertPrecos
+from api.services.relatorios_service.relatorios_caixas_service import RelatoriosCaixasService
+from api.services.relatorios_service.relatorio_venda_service import RelatorioVendasService
+from api.repository.venda_repository import VendaRepository
+from api.enums.status_venda import StatusVenda
 
 LARGURA = 48
 
 
 class Comprovante:
+
+    def __init__(self):
+        self.caixa_service = RelatoriosCaixasService()
+        self.venda_relatorio_service = RelatorioVendasService()
+        self.venda_repository = VendaRepository()
 
     def criar_arquivo_comprovante(
         self,
@@ -90,3 +99,22 @@ class Comprovante:
         ])
 
         return "\n".join(linhas) + "\n"
+
+
+    # A função e usada para ser consumida por um endpoint para API
+    # Ela apenas busca pagamento, venda iniciada e os itens da venda iniciada
+    def consultar_comprovante_api(self, venda_iniciada_id: int, pagamento_id: int) -> dict:
+        pagamento = self.caixa_service.buscar_pagamentos_id(pagamento_id) 
+        venda_iniciada = self.venda_relatorio_service.buscar_vendas_iniciadas(venda_iniciada_id)
+        itens = self.venda_repository.buscar_itens_venda(venda_iniciada_id)
+
+        if "erro" in venda_iniciada: return venda_iniciada
+        if "erro" in pagamento: return pagamento
+
+        return {
+            "itens": itens,
+            "pagamento": pagamento,
+            "venda": venda_iniciada
+        }
+
+
