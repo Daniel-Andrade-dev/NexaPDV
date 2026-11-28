@@ -1,4 +1,4 @@
-
+from datetime import datetime
 
 
 
@@ -55,3 +55,40 @@ class CarrinhoResponseFormat:
             }
             for response in response_api
         ]
+
+
+class ComprovanteResponseFormat:
+
+    @staticmethod
+    def response_api_comprovante(response_api: dict[list, str]):
+        MSG_FIXA = "Obrigado pela preferência! Volte sempre"
+
+        if 'erro' in response_api: return response_api
+        
+        pagamento, venda, itens = response_api['pagamento'], response_api['venda'], response_api['itens']
+
+        return {
+            "comprovante": {
+                "venda_id": venda['venda_iniciada_id'],
+                "emitido_em": datetime.now().strftime("%d/%m/%Y às %H:%M"),
+                "itens": [
+                    {
+                        "produto": item['nome_produto'],
+                        "preco_unitario_centavos": item['preco_unitario_centavos'],
+                        "quantidade_venda": item['quantidade_venda'],
+                        "valor_total_produto_centavos": item['valor_total_produto_centavos']
+                    } 
+                    for item in itens
+                ],
+                "pagamento": {
+                    "forma_pagamento": pagamento['forma_pagamento'], 
+                    "subtotal_centavos": venda['subtotal_centavos'],
+                    "desconto_centavos": venda['desconto_centavos'],
+                    "valor_total_centavos": venda['valor_total_centavos'],
+                    "valor_pago_centavos": pagamento['valor_pago_centavos']      
+                },
+                "troco_centavos": pagamento['troco_centavos'],
+                "msg": MSG_FIXA
+            }
+        }
+
