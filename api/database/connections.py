@@ -5,12 +5,13 @@ DB_NAME = "NexaPDV.db"
 
 class Tabelas:
 
+    # Categoria não e obrigatoria
     @staticmethod
     def tabela_produtos():
         return """
             CREATE TABLE IF NOT EXISTS produtos (
                 codigo_produto INTEGER PRIMARY KEY AUTOINCREMENT,
-                categoria_id INTEGER NOT NULL,
+                categoria_id INTEGER,
                 nome_produto TEXT UNIQUE NOT NULL,
                 preco_unitario_centavos INTEGER NOT NULL,
                 estoque INTEGER NOT NULL,

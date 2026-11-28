@@ -80,7 +80,7 @@ class ValidatorCaixa:
 
         if buscar_caixa['status'] == StatusCaixa.FECHADO: return {
             "status": 400,
-            "erro": f"Caixa {buscar_caixa['caixa_id']} já está fechado"
+            "erro": f"Caixa {buscar_caixa['caixa_id']} está fechado"
         }
 
         return self.retorno(buscar_caixa)

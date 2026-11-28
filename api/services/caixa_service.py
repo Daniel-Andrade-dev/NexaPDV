@@ -91,16 +91,14 @@ class CaixaService:
     
     def sangria_caixa(self, sangria_id: int, caixa_id: int) -> dict:
 
-        busca_caixa = self.buscar_caixa_id(caixa_id)
-        busca_sangria = self.buscar_sangria_id(sangria_id)
-        
-        if busca_caixa['status'] != StatusCaixa.ABERTO:
-            return {
-                "status": 400,
-                "erro": "Não é possível realizar a sangria com caixa fechado"
-            }
+        status_caixa = self.validator_caixa.validar_status_fechamento_caixa(caixa_id)
 
-        if busca_sangria['valor_retirado_centavos'] > busca_caixa['valor_inicial_centavos']:
+        if "erro" in status_caixa: return status_caixa
+
+        busca_sangria = self.buscar_sangria_id(sangria_id)
+
+
+        if busca_sangria['valor_retirado_centavos'] > status_caixa['caixa']['valor_inicial_centavos']:
             return {
                 "status": 400,
                 "erro": "Não dinheiro suficiente para realizar a sangria. Verifique qual valor foi inserido"
@@ -108,17 +106,17 @@ class CaixaService:
 
         sangria = Sangrias(
             sangria_id=busca_sangria['sangria_id'],
-            caixa_id=busca_caixa['caixa_id'],
+            caixa_id=status_caixa['caixa']['caixa_id'],
             valor_retirado_centavos=busca_sangria['valor_retirado_centavos'],
             data_sangria=busca_sangria['data_sangria'],
             horario_sangria=busca_sangria['horario_sangria']
         )
 
         caixa = Caixa(
-            caixa_id=busca_caixa['caixa_id'],
-            valor_inicial_centavos=busca_caixa['valor_inicial_centavos'],
-            horario_aberto=busca_caixa['horario_aberto'],
-            data_aberto=busca_caixa['data_aberto'],
+            caixa_id=status_caixa['caixa']['caixa_id'],
+            valor_inicial_centavos=status_caixa['caixa']['valor_inicial_centavos'],
+            horario_aberto=status_caixa['caixa']['horario_aberto'],
+            data_aberto=status_caixa['caixa']['data_aberto'],
             status=StatusCaixa.ABERTO
         )
 
@@ -128,8 +126,7 @@ class CaixaService:
 
         busca_caixa = self.buscar_caixa_id(caixa_id)
 
-        if "erro" in busca_caixa:
-            return busca_caixa
+        if "erro" in busca_caixa: return busca_caixa
 
         if busca_caixa['status'] != StatusCaixa.ABERTO:
             return {
@@ -147,6 +144,10 @@ class CaixaService:
 
     def buscar_caixa_id(self, caixa_id: int) -> dict | None:
         resultado_repository = self.caixa_repository.buscar_caixa_id(caixa_id)
+        if resultado_repository is None: return {
+            "status": 404,
+            "erro": "Caixa não encontrado"
+        }
         return resultado_repository
 
     def buscar_sangria_id(self, sangria_id: int):

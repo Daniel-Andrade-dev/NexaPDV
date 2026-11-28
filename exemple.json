@@ -1,0 +1,29 @@
+{
+    "comprovante": {
+        "venda_id": 1,
+        "emitida_em": "11/11/2009",
+        "itens": [
+            {
+                "produto": "Danone",
+                "preco_unitario": 89.99,
+                "quantidade_venda": 1,
+                "valor_total": 89.99
+            },
+            {
+                "produto": "Cebola",
+                "preco_unitario": 21.99,
+                "quantidade_venda": 1,
+                "valor_total": 21.99
+            }
+        ],
+        "pagamento": {
+            "forma": "credito",
+            "subtotal": 111.98,
+            "desconto": 0.0,
+            "valor_total": 111.98,
+            "valor_pago": 500
+        },
+        "troco": 0.0,
+        "msg": "Obrigado pela preferência! Volte sempre"
+    }
+}

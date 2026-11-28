@@ -7,6 +7,8 @@ from api.services.caixa_service import CaixaService
 from api.enums.status_venda import StatusVenda
 from api.decorators.errors import verificar_erros_servidor
 from api.services.relatorios_service.relatorio_venda_service import RelatorioVendasService
+from api.classes.comprovante import Comprovante
+from api.classes.response_format import ComprovanteResponseFormat
 from datetime import datetime
 
 
@@ -15,6 +17,7 @@ venda_service = VendaService()
 produto_service = ProdutoService()
 caixa_service = CaixaService()
 relatorio_venda_service = RelatorioVendasService()
+comprovante = Comprovante()
 
 @venda_bp.route("/vendas/iniciar_vendas/<int:caixa_id>", methods=["POST"])
 @verificar_erros_servidor
@@ -124,3 +127,13 @@ def cancelar_vendas(venda_iniciada_id: int):
         return jsonify(resultado_service), resultado_service.get("status", 400)
 
     return jsonify(resultado_service), 200
+
+
+@venda_bp.route("/vendas/consulta_comprovante/<int:venda_iniciada_id>", methods=['GET'])
+def consulta_comprovante(venda_iniciada_id: int):
+    payload = request.get_json()
+    resultado = comprovante.consultar_comprovante_api(
+        venda_iniciada_id,
+        payload['pagamento_id'],
+    )
+    return jsonify(ComprovanteResponseFormat().response_api_comprovante(resultado)), resultado.get("status", 200)

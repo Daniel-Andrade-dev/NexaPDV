@@ -7,7 +7,6 @@ class RelatoriosCaixasService:
     def __init__(self):
         self.relatorios_caixas_repository = RelatoriosCaixasRepository()
 
-    #Objetivo ser exibido para o front-end
     def tratar_dados_caixas(self, dados_retornados: list):
         return self.relatorios_caixas_repository.qtd_caixas_fechados(), {
             "qtd_caixas_cadastrados": len(dados_retornados),
@@ -37,16 +36,14 @@ class RelatoriosCaixasService:
 
         if dados != []:
             return self.tratar_dados_caixas(dados)
-        else:
-            return {"msg": "Não há caixas cadastrados no momento"}
+        return {"msg": "Não há caixas cadastrados no momento"}
     
     def pagamentos_caixas(self):
         dados = self.relatorios_caixas_repository.pagamentos_caixas()
 
         if dados != []:
             return self.tratar_dados_pagamentos_caixas(dados)
-        else:
-            return {"msg": "Não há pagamentos registrados no momento"}
+        return {"msg": "Não há pagamentos registrados no momento"}
 
     def buscar_caixa_id(self, caixa_id: int) -> dict | None:
         dados = self.relatorios_caixas_repository.buscar_caixas_id(caixa_id)
@@ -55,5 +52,12 @@ class RelatoriosCaixasService:
             "status": 404,
             "erro": f"Caixa {caixa_id} não encontrado"
         }
-        else:
-            return dados
+        return dados
+
+    def buscar_pagamentos_id(self, pagamento_id: int):
+        dados = self.relatorios_caixas_repository.buscar_pagamentos_id(pagamento_id)
+        if dados is None: return {
+            "status": 404,
+            "erro": "Pagamento ID não encontrado"
+        }
+        return dados

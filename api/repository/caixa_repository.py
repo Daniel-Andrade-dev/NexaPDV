@@ -359,5 +359,4 @@ class CaixaRepository:
                     "horario_aberto": caixa['horario_aberto'],
                     "status": caixa['status']
                 }
-            else:
-                return {"status": 404, "erro": "Caixa não encontrado"}
+            return None

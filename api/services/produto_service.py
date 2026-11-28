@@ -5,15 +5,18 @@ from api.validator.validator import Validator
 from api.enums.status_produto import StatusProduto
 from api.repository.categoria_repository import CategoriaRepository
 from api.decorators.time_func import medir_tempo_execucao
+from api.validator.validator_types import ValidatorTypes
 
 class ProdutoService:
 
     def __init__(self):
         self.produto_repository = ProdutoRepository()
         self.categoria_repository = CategoriaRepository()
+        self.validor_type = ValidatorTypes()
 
     @medir_tempo_execucao
     def cadastrar_produto(self, categoria_id: int, produto: Produto) -> dict:
+        validator = self.validor_type.validar_valores_int(produto.preco_unitario_centavos)
 
         if not Validator.validar_campos([
             produto.nome_produto,
@@ -25,6 +28,8 @@ class ProdutoService:
                 "status": 400,
                 "erro": "A campos vazios para serem preenchidos"
             }
+
+        if isinstance(validator, dict) and "erro" in validator: return validator
 
         if not Validator.validar_negativos([produto.preco_unitario_centavos, produto.estoque]):
             return {
@@ -45,10 +50,11 @@ class ProdutoService:
     def atualizar_produto(self, categoria_id: int, produto: Produto) -> dict:
 
         buscar_produto = self.produto_repository.buscar_produto(produto.codigo_produto)
+        validator = self.validor_type.validar_valores_int(produto.preco_unitario_centavos)
 
         if "erro" in buscar_produto:
             return buscar_produto
-        
+
         if not Validator.validar_campos([
             produto.nome_produto,
             produto.preco_unitario_centavos,
@@ -59,6 +65,8 @@ class ProdutoService:
                 "status": 400,
                 "erro": "A campos vazios para serem preenchidos"
             }
+
+        if isinstance(validator, dict) and "erro" in validator: return validator
         
         if not Validator.validar_negativos([produto.preco_unitario_centavos, produto.estoque]):
             return {

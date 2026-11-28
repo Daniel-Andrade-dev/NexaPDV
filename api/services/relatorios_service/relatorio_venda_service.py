@@ -6,7 +6,6 @@ class RelatorioVendasService:
     def __init__(self):
         self.relatorio_vendas = RelatorioVendasRepository()
 
-    #Objetivo ser exibido para o front-end
     def tratar_dados_vendas_iniciadas(self, dados_retornados: list[dict]) -> list[dict]:
         return {
             "qtd_vendas_iniciadas": len(dados_retornados),
@@ -20,7 +19,6 @@ class RelatorioVendasService:
             "iniciada_em": f"{dados['data_iniciada']}T{dados['horario_iniciada']}"
         } for dados in dados_retornados]
     
-    #Objetivo ser exibido para o front-end
     def tratar_dados_vendas_finalizadas(self, dados_retornados: list[dict]) -> list[dict]:
         return {
             "qtd_vendas_finalizadas": len(dados_retornados),
