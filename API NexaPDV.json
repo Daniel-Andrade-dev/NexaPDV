@@ -33,7 +33,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "  {\n    \"itens\": [\n      {\n        \"codigo_produto\": 1,\n        \"quantidade_venda\": 1\n      },\n      {\n        \"codigo_produto\": 1,\n        \"quantidade_venda\": 1\n      }\n    ]\n  }",
+              "raw": "",
               "options": {
                 "raw": {
                   "language": "json"
@@ -67,7 +67,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"forma_pagamento\": \"credito\",\n  \"valor_dinheiro_centavos\": 50000,\n  \"caixa_id\": {{caixa_id}}\n}\n",
+              "raw": "",
               "options": {
                 "raw": {
                   "language": "json"
@@ -155,7 +155,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"forma_pagamento\": \"pix\",\n  \"caixa_id\": {{caixa_id}}\n}",
+              "raw": "",
               "options": {
                 "raw": {
                   "language": "json"
@@ -192,7 +192,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pagamento_id\": {{pagamento_id}} // Para buscar o pagamento feito ao finalizar a venda\n}",
+              "raw": "",
               "options": {
                 "raw": {
                   "language": "json"
@@ -262,7 +262,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"categoria_id\": 0,\n  \"nome_produto\": \"Teste\",\n  \"preco_unitario_centavos\": 100,\n  \"estoque\": 100,\n  \"status\": \"ativo\"\n}",
+                  "raw": "",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -294,7 +294,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"categoria_id\": 1,\n  \"nome_produto\": \"1cebola\",\n  \"preco_unitario_centavos\": 5000,\n  \"estoque\": 670,\n  \"status\": \"ativo\"\n}",
+                  "raw": "",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -379,7 +379,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"categoria\": \"Categoria Teste\",\n  \"status\": \"ativa\"\n}",
+                  "raw": "",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -435,7 +435,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nome\": \"frios\",\n  \"status\": \"ativo\" \n}",
+                  "raw": "",
                   "options": {
                     "raw": {
                       "language": "json"
