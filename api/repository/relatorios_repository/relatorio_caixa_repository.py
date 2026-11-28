@@ -89,3 +89,26 @@ class RelatoriosCaixasRepository:
             cur = conn.execute(sql, (caixa_id,))
             caixa = cur.fetchone()
             return dict(caixa) if caixa is not None else None
+
+    @verificar_erros_banco
+    def buscar_pagamentos_id(self, pagamento_id: int) -> dict | None:
+
+        sql = """
+            SELECT
+                pagamento_id,
+                caixa_id,
+                forma_pagamento,
+                valor_total_venda_centavos,
+                valor_pago_centavos,
+                troco_centavos
+            FROM
+                pagamentos_caixa
+            WHERE
+                pagamento_id = ?
+        """
+
+        with ConnectionDataBase().connect_sql() as conn:
+            cur = conn.execute(sql, (pagamento_id,))
+            pagamento = cur.fetchone()
+
+            return dict(pagamento) if pagamento is not None else None
